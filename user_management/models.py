@@ -45,12 +45,12 @@ class Role(Base):
 
 
 class UserRole(Base):
-    __tablename__ = "user_Role"
+    __tablename__ = "user_role"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     role_id = Column(Integer, ForeignKey('roles.id'), nullable=False)
 
-    user = relationship(UserModel, back_populates="role")
-    role = relationship(Role, back_populates="user")
+    user = relationship("UserModel", back_populates="role")
+    role = relationship("Role", back_populates="user")
