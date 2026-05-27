@@ -29,6 +29,7 @@ class UserSocialMediaID(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    username = Column(String(100), nullable=False)
     social_media = Column(String(50), nullable=False)
 
     user = relationship("UserModel", back_populates="favorite_movies")
