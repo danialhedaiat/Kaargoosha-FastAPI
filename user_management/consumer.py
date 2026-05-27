@@ -27,7 +27,6 @@ class UserConsumer:
         try:
             data = msgpack.unpackb(body)
 
-
             if method.route_key == "user.create":
                 logger.info("create")
             elif method.route_key == "user.update":
