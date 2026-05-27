@@ -5,6 +5,7 @@ from pika.adapters.blocking_connection import BlockingChannel
 
 from pika import BasicProperties
 from core.rabbitmq_connection import RabbitMQConnection
+from user_management.service import UserService
 
 logger = logging.getLogger(__name__)
 
@@ -27,14 +28,14 @@ class UserConsumer:
         try:
             data = msgpack.unpackb(body)
 
-            if method.route_key == "user.create":
+            if method.routing_key == "user.create":
                 logger.info("create")
-            elif method.route_key == "user.update":
+            elif method.routing_key == "user.update":
                 logger.info("update")
-            elif method.route_key == "user.get":
+            elif method.routing_key == "user.get":
                 logger.info("get")
-            elif method.route_key == "user.delete":
-                logger.info("delete")
+            elif method.routing_key == "user.delete":
+                UserService().delete()
 
 
         except Exception as e:
