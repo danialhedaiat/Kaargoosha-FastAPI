@@ -10,7 +10,7 @@ class UserModel(Base):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    phone_number = Column(String, unique=True)
+    phone_number = Column(String(15), unique=True)
     is_verify = Column(Boolean, default=False)
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(50), nullable=False)
