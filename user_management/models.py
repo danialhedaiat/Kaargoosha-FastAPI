@@ -32,7 +32,7 @@ class UserSocialMediaID(Base):
     username = Column(String(100), nullable=False)
     social_media = Column(String(50), nullable=False)
 
-    user = relationship("UserModel", back_populates="favorite_movies")
+    user = relationship("UserModel", back_populates="user_social_medias")
 
 
 class Role(Base):
