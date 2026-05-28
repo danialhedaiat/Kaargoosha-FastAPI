@@ -33,9 +33,10 @@ class UserConsumer:
     def request_user(ch: BlockingChannel, method, properties: BasicProperties, body):
         try:
             data = msgpack.unpackb(body)
+            service = UserService()
 
             if method.routing_key == "user.create":
-                logger.info("create")
+                service.create(data)
             elif method.routing_key == "user.update":
                 logger.info("update")
             elif method.routing_key == "user.get":
