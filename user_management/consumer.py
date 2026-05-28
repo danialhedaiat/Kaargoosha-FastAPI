@@ -49,3 +49,15 @@ class UserConsumer:
             import traceback
             logger.error(traceback.format_exc())
             logger.error(e)
+
+    @staticmethod
+    def response(ch, method, properties, response):
+        response = msgpack.packb(response)
+        ch.basic_publish(
+            exchange='',
+            routing_key=properties.reply_to,
+            properties=BasicProperties(correlation_id=properties.correlation_id),
+            body=response
+        )
+
+        ch.basic_ack(delivery_tag=method.delivery_tag)
