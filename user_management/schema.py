@@ -17,6 +17,7 @@ class UserCompleteSchema(UserBaseSchema):
 
 class UserSocialMediaBaseSchema(BaseModel):
     social_media: str = Field(..., max_length=50)
+    username: str = Field(..., max_length=50)
     user_id: int
 
 
@@ -26,8 +27,6 @@ class UserSocialMediaResponseSchema(UserSocialMediaBaseSchema):
 
 class RoleBaseSchema(BaseModel):
     name: str = Field(..., max_length=30)
-
-
 
 
 class RoleResponseSchema(RoleBaseSchema):
