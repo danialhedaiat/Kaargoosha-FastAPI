@@ -1,5 +1,7 @@
 from core.database import SessionLocal, get_db
+from core.settings import logger
 from user_management.models import UserModel, UserSocialMediaID
+from user_management.schema import UserCompleteSchema
 
 
 class UserService:
@@ -13,6 +15,38 @@ class UserService:
             return {"message": "User already exists"}
         return {"message": "User does not exist"}
 
+    def create(self, data):
+        try:
+            with self.db.begin():
+                user = UserModel(
+                    phone_number=data["phone_number"],
+                    first_name=data["first_name"],
+                    last_name=data["last_name"]
+                )
+                self.db.add(user)
+
+                self.db.flush()  # 👈 gets user.id without commit
+
+                exists = self.db.query(UserSocialMediaID).filter_by(
+                    username=data["username"],
+                    social_media=data["social_media"]
+                ).first()
+                if exists:
+                    raise Exception("User already exists")
+                user_social_media = UserSocialMediaID(
+                    user_id=user.id,
+                    username=data["username"],
+                    social_media=data["social_media"]
+                )
+
+                self.db.add(user_social_media)
+
+            return UserCompleteSchema.model_validate(user).model_dump_json()
+        except Exception as e:
+            import traceback
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return {"message": str(e)}
 
     def delete(self, data):
 
