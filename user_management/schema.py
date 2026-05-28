@@ -4,15 +4,15 @@ from pydantic import BaseModel, Field
 
 
 class UserBaseSchema(BaseModel):
-    phone_number: int = Field(..., max_length=15)
-    first_name: int = Field(..., max_length=50)
-    last_name: int = Field(..., max_length=50)
 
 
 class UserCompleteSchema(UserBaseSchema):
     id: int
     is_verify: bool
     create_data: datetime
+    phone_number: str = Field(..., max_length=15)
+    first_name: str = Field(..., max_length=50)
+    last_name: str = Field(..., max_length=50)
 
 
 class UserSocialMediaBaseSchema(BaseModel):
