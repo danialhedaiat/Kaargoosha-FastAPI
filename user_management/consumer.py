@@ -22,6 +22,7 @@ class UserConsumer:
         logger.info("running consumer")
 
         self.channel.queue_declare(queue='user_queue')
+        self.channel.exchange_declare(exchange='user', exchange_type='topic', durable=True)
         self.channel.queue_bind(queue='user_queue', exchange="user", routing_key="user.*")
         self.channel.basic_consume(queue='user_queue', on_message_callback=self.request_user)
 
