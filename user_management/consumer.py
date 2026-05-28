@@ -29,14 +29,19 @@ class UserConsumer:
         logger.info("Waiting for messages in user_queue. To exit press CTRL+C")
         self.channel.start_consuming()
 
-    @staticmethod
-    def request_user(ch: BlockingChannel, method, properties: BasicProperties, body):
+    def request_user(self, ch: BlockingChannel, method, properties: BasicProperties, body):
         try:
             data = msgpack.unpackb(body)
             service = UserService()
 
             if method.routing_key == "user.create":
-                service.create(data)
+                result = service.create(data)
+                self.response(ch, method, properties, result)
+
+            elif method.routing_key == "user.check_phone_number":
+                result = service.check_phone_number_exist(data)
+                self.response(ch, method, properties, result)
+
             elif method.routing_key == "user.update":
                 logger.info("update")
             elif method.routing_key == "user.get":
