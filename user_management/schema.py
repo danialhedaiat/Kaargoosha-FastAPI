@@ -1,15 +1,10 @@
 from datetime import datetime
+from typing import List
 
 from pydantic import BaseModel, Field
 
 
 class UserBaseSchema(BaseModel):
-
-
-class UserCompleteSchema(UserBaseSchema):
-    id: int
-    is_verify: bool
-    create_data: datetime
     phone_number: str = Field(..., max_length=15)
     first_name: str = Field(..., max_length=50)
     last_name: str = Field(..., max_length=50)
@@ -27,6 +22,15 @@ class UserSocialMediaResponseSchema(UserSocialMediaBaseSchema):
     class Config:
         from_attributes = True
 
+
+class UserCompleteSchema(UserBaseSchema):
+    id: int
+    is_verify: bool
+    create_date: datetime
+    user_social_medias: List[UserSocialMediaResponseSchema] = []
+
+    class Config:
+        from_attributes = True
 
 
 class RoleBaseSchema(BaseModel):
