@@ -24,6 +24,10 @@ class UserSocialMediaBaseSchema(BaseModel):
 class UserSocialMediaResponseSchema(UserSocialMediaBaseSchema):
     id: int
 
+    class Config:
+        from_attributes = True
+
+
 
 class RoleBaseSchema(BaseModel):
     name: str = Field(..., max_length=30)
