@@ -5,17 +5,22 @@ from pika.adapters.blocking_connection import BlockingChannel
 
 from pika import BasicProperties
 from core.rabbitmq_connection import RabbitMQConnection
+from core.settings import logger
 from user_management.service import UserService
 
-logger = logging.getLogger(__name__)
+
 
 
 class UserConsumer:
     def __init__(self):
+        logger.info("Init consumer")
+
         self.rabbitmq = RabbitMQConnection()
         self.channel = self.rabbitmq.channel
 
     def start_consuming(self):
+        logger.info("running consumer")
+
         self.channel.queue_declare(queue='user_queue')
         self.channel.queue_bind(queue='user_queue', exchange="user", routing_key="user.*")
         self.channel.basic_consume(queue='user_queue', on_message_callback=self.request_user)
