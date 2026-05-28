@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import Integer, String, Boolean, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from core.database import Base
@@ -26,6 +26,10 @@ class UserModel(Base):
 
 class UserSocialMediaID(Base):
     __tablename__ = 'user_social_media_id'
+
+    __table_args__ = (
+        UniqueConstraint("username", "social_media", name="username_social_media_unique"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=False)
