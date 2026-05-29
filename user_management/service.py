@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 
 from core.database import SessionLocal, get_db
 from core.settings import logger
-from user_management.models import UserModel, UserSocialMediaID, Role
+from user_management.models import UserModel, UserSocialMediaID, Role, UserRole
 from user_management.schema import UserCompleteSchema, RoleResponseSchema
 
 
@@ -104,11 +104,51 @@ class RoleService:
             logger.error(e)
             return {"error": str(e)}
 
-            return RoleResponseSchema.model_validate(role).model_dump_json()
-        except Exception as exc:
-            logger.error(traceback.format_exc())
-            logger.error(exc)
-            return {"message": str(exc)}
+    def get_all_roles(self):
+        roles = self.db.query(Role).all()
+        return [{"id": role.id, "name": role.name} for role in roles]
+
+    def get_role(self, role_id: int):
+        role = self.db.query(Role).filter_by(id=role_id).first()
+        if not role:
+            return {"error": "Role not found"}
+        return {"id": role.id, "name": role.name}
+
+    def delete_role(self, role_id: int):
+        try:
+            role = self.db.query(Role).filter_by(id=role_id).first()
+            if not role:
+                return {"error": "Role not found"}
+
+            self.db.delete(role)
+            self.db.commit()
+            return {"status": "deleted"}
+        except Exception as e:
+            self.db.rollback()
+            logger.error(e)
+            return {"error": str(e)}
+
+    # ── Assign / Revoke roles on users ─────────────────────────
+
+    def assign_role(self, data: dict):
+        """data = {requested_by, user_id, role_id}"""
+        try:
+            user = self.db.query(UserModel).filter_by(id=data["user_id"]).first()
+            if not user:
+                return {"error": "User not found"}
+
+            role = self.db.query(Role).filter_by(id=data["role_id"]).first()
+            if not role:
+                return {"error": "Role not found"}
+
+            user_role = UserRole(user_id=data["user_id"], role_id=data["role_id"])
+            self.db.add(user_role)
+            self.db.commit()
+            return {"status": "role assigned", "user_id": data["user_id"], "role_id": data["role_id"]}
+        except Exception as e:
+            self.db.rollback()
+            logger.error(e)
+            return {"error": str(e)}
 
     @staticmethod
     def is_admin(user: UserModel) -> bool:
