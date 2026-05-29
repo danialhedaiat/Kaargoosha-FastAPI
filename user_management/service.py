@@ -1,3 +1,4 @@
+import json
 import traceback
 
 from sqlalchemy.exc import IntegrityError
@@ -16,8 +17,8 @@ class UserService:
     def check_phone_number_exist(self, data):
         exists = self.db.query(UserModel).filter_by(phone_number=data["phone_number"]).all()
         if exists:
-            return {"message": "User already exists"}
-        return {"error": "User does not exist"}
+            return json.dumps({"message": "User already exists"})
+        return json.dumps({"error": "User does not exist"})
 
     def get_user_by_username(self, data):
         user_social_media = self.db.query(UserSocialMediaID).filter_by(username=data["username"],
@@ -54,7 +55,7 @@ class UserService:
         except Exception as e:
             logger.error(traceback.format_exc())
             logger.error(e)
-            return {"error": str(e)}
+            return json.dumps({"error": str(e)})
 
     def join_user(self, data):
         try:
@@ -78,7 +79,8 @@ class UserService:
             self.db.rollback()
             logger.error(traceback.format_exc())
             logger.error(e)
-            return {"error": str(e)}
+            return json.dumps({"error": str(e)})
+
 
     def delete(self, data):
         pass
