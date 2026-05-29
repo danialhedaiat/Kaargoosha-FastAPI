@@ -7,6 +7,7 @@ from core.database import SessionLocal, get_db
 from core.settings import logger
 from user_management.models import UserModel, UserSocialMediaID, Role, UserRole
 from user_management.schema import UserCompleteSchema, RoleResponseSchema
+from user_management.schema import UserCompleteSchema, RoleResponseSchema, AssignRoleResponseSchema
 
 
 class UserService:
@@ -85,7 +86,6 @@ class UserService:
             logger.error(e)
             return json.dumps({"error": str(e)})
 
-
     def delete(self, data):
         pass
 
@@ -101,38 +101,38 @@ class RoleService:
             self.db.add(role)
             self.db.commit()
             self.db.refresh(role)
-            return {"id": role.id, "name": role.name}
+            return RoleResponseSchema().model_validate(role).model_dump_json()
         except IntegrityError:
             self.db.rollback()
-            return {"error": "Role already exists"}
+            return json.dumps({"error": "Role already exists"})
         except Exception as e:
             self.db.rollback()
             logger.error(e)
-            return {"error": str(e)}
+            return json.dumps({"error": str(e)})
 
     def get_all_roles(self):
         roles = self.db.query(Role).all()
-        return [{"id": role.id, "name": role.name} for role in roles]
+        return [RoleResponseSchema().model_validate(role).model_dump_json() for role in roles]
 
     def get_role(self, role_id: int):
         role = self.db.query(Role).filter_by(id=role_id).first()
         if not role:
             return {"error": "Role not found"}
-        return {"id": role.id, "name": role.name}
+        return RoleResponseSchema().model_validate(role).model_dump_json()
 
     def delete_role(self, role_id: int):
         try:
             role = self.db.query(Role).filter_by(id=role_id).first()
             if not role:
-                return {"error": "Role not found"}
+                return json.dumps({"error": "Role not found"})
 
             self.db.delete(role)
             self.db.commit()
-            return {"status": "deleted"}
+            return json.dumps({"message": "deleted"})
         except Exception as e:
             self.db.rollback()
             logger.error(e)
-            return {"error": str(e)}
+            return json.dumps({"error": str(e)})
 
     # ── Assign / Revoke roles on users ─────────────────────────
 
@@ -141,43 +141,45 @@ class RoleService:
         try:
             user = self.db.query(UserModel).filter_by(id=data["user_id"]).first()
             if not user:
-                return {"error": "User not found"}
+                return json.dumps({"error": "User not found"})
 
             role = self.db.query(Role).filter_by(id=data["role_id"]).first()
             if not role:
-                return {"error": "Role not found"}
+                return json.dumps({"error": "Role not found"})
 
             user_role = UserRole(user_id=data["user_id"], role_id=data["role_id"])
             self.db.add(user_role)
             self.db.commit()
-            return {"status": "role assigned", "user_id": data["user_id"], "role_id": data["role_id"]}
+            return AssignRoleResponseSchema().model_validate(user_role).model_dump_json()
         except Exception as e:
             self.db.rollback()
             logger.error(e)
-            return {"error": str(e)}
+            return json.dumps({"error": str(e)})
 
     def revoke_role(self, data: dict):
         """data = {requested_by, user_id, role_id}"""
         try:
             # requester = self.db.query(UserModel).filter_by(id=data["requested_by"]).first()
 
-
             user_role = self.db.query(UserRole).filter_by(
                 user_id=data["user_id"], role_id=data["role_id"]
             ).first()
             if not user_role:
-                return {"error": "User does not have this role"}
+                return json.dumps({"error": "User does not have this role"})
 
             self.db.delete(user_role)
             self.db.commit()
-            return {"status": "role revoked"}
+            return json.dumps({"message": "role revoked"})
         except Exception as e:
             self.db.rollback()
             logger.error(e)
-            return {"error": str(e)}
+            return json.dumps({"error": str(e)})
 
     def get_user_roles(self, user_id: int):
         user = self.db.query(UserModel).filter_by(id=user_id).first()
         if not user:
             return {"error": "User not found"}
         return [{"id": user_role.role.id, "name": user_role.role.name} for user_role in user.role]
+            return json.dumps({"error": "User not found"})
+        return [AssignRoleResponseSchema().model_validate(user_role).model_dump_json() for user_role in user.role]
+
