@@ -73,6 +73,7 @@ class UserService:
 
             return UserCompleteSchema.model_validate(user).model_dump_json()
         except Exception as e:
+            self.db.rollback()
             logger.error(traceback.format_exc())
             logger.error(e)
             return {"error": str(e)}
