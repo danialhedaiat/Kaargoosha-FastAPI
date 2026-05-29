@@ -82,12 +82,12 @@ class UserService:
         requester_id = data["requested_by"]
         target_user_id = data["user_id"]
 
-        requester = self.user_repo.get(requester_id)
+        requester = self.db.query(UserModel).get(requester_id)
 
         if not RoleService.is_admin(requester):
             return {"error": "forbidden"}
 
-        self.user_repo.delete(target_user_id)
+        self.db.query(UserModel).delete(target_user_id)
 
         return {"status": "deleted"}
 
