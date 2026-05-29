@@ -30,16 +30,6 @@ class UserWithoutRoleSchema(UserBaseSchema):
     social_media: List[UserSocialMediaResponseSchema] = []
 
 
-class UserCompleteSchema(UserBaseSchema):
-    id: int
-    is_verify: bool
-    create_date: datetime
-    social_media: List[UserSocialMediaResponseSchema] = []
-
-    class Config:
-        from_attributes = True
-
-
 class RoleBaseSchema(BaseModel):
     name: str = Field(..., max_length=30)
 
@@ -83,3 +73,14 @@ class RolePermissionBaseSchema(BaseModel):
 
 class RolePermissionResponseSchema(RolePermissionBaseSchema):
     id: int
+
+
+class UserCompleteSchema(UserBaseSchema):
+    id: int
+    is_verify: bool
+    create_date: datetime
+    social_media: List[UserSocialMediaResponseSchema] = []
+    role: List[AssignRoleResponseSchema] = []
+
+    class Config:
+        from_attributes = True
