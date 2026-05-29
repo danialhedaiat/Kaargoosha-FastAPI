@@ -16,6 +16,7 @@ class UserService:
         return {"message": "User does not exist"}
 
     def create(self, data):
+    def create_user(self, data):
         try:
             with self.db.begin():
                 user = UserModel(
@@ -25,7 +26,7 @@ class UserService:
                 )
                 self.db.add(user)
 
-                self.db.flush()  # 👈 gets user.id without commit
+                self.db.flush()
 
                 exists = self.db.query(UserSocialMediaID).filter_by(
                     username=data["username"],
