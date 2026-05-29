@@ -7,7 +7,8 @@ from core.database import SessionLocal, get_db
 from core.settings import logger, settings
 from user_management.models import UserModel, UserSocialMediaID, Role, UserRole, RolePermission
 from user_management.permissions import Permissions
-from user_management.schema import UserCompleteSchema, RoleResponseSchema, AssignRoleResponseSchema
+from user_management.schema import UserCompleteSchema, RoleResponseSchema, AssignRoleResponseSchema, \
+    RolePermissionResponseSchema
 
 
 class UserService:
@@ -181,3 +182,59 @@ class RoleService:
             return json.dumps({"error": "User not found"})
         return [AssignRoleResponseSchema().model_validate(user_role).model_dump_json() for user_role in user.role]
 
+
+class PermissionService:
+    def __init__(self):
+        self.db = get_db()
+
+    # ── Permission CRUD ────────────────────────────────────────
+
+    def create_permission(self, data: dict):
+
+        role_permission = RolePermission(role_id=data["role_id"], codename=data["codename"])
+        self.db.add(role_permission)
+        self.db.commit()
+        self.db.refresh(role_permission)
+
+        return RolePermissionResponseSchema().model_validate(role_permission).model_dump_json()
+
+    def get_all_permissions(self):
+        return Permissions().__dict__
+
+    def delete_permission_from_role(self, data: dict):
+        permission = self.db.query(RolePermission).filter_by(codename=data["permission_codename"]).first()
+        if not permission:
+            return {"error": "Permission not found"}
+
+        role_permission = self.db.query(RolePermission).filter_by(
+            role_id=data["role_id"], permission_id=permission.id
+        ).first()
+        if not role_permission:
+            return {"error": "Role does not have this permission"}
+
+        self.db.delete(role_permission)
+        self.db.commit()
+        return {"status": "revoked"}
+
+    def get_role_permissions(self, data: dict):
+        role = self.db.query(Role).filter_by(id=data["role_id"]).first()
+        if not role:
+            return {"error": "Role not found"}
+        return [
+            RolePermissionResponseSchema().model_validate(role_permission).model_dump_json()
+            for role_permission in role.permission
+        ]
+
+    # ── The core check ─────────────────────────────────────────
+
+    @staticmethod
+    def has_permission(user: UserModel, codename: str) -> bool:
+        if not user:
+            return False
+        if user.phone_number == settings.GOD:
+            return True
+        return any(
+            role_permission.codename == codename
+            for user_role in user.role
+            for role_permission in user_role.role.permissions
+        )
