@@ -15,11 +15,11 @@ class UserService:
         exists = self.db.query(UserModel).filter_by(phone_number=data["phone_number"]).all()
         if exists:
             return {"message": "User already exists"}
-        return {"message": "User does not exist"}
+        return {"error": "User does not exist"}
 
     def get_user_by_username(self, data):
         user_social_media = self.db.query(UserSocialMediaID).filter_by(username=data["username"],
-                                                          social_media=data["social_media"]).first()
+                                                                       social_media=data["social_media"]).first()
         return UserCompleteSchema.model_validate(user_social_media.user).model_dump_json()
 
     def create_user(self, data):
@@ -52,7 +52,7 @@ class UserService:
         except Exception as e:
             logger.error(traceback.format_exc())
             logger.error(e)
-            return {"message": str(e)}
+            return {"error": str(e)}
 
     def join_user(self, data):
         try:
@@ -75,7 +75,7 @@ class UserService:
         except Exception as e:
             logger.error(traceback.format_exc())
             logger.error(e)
-            return {"message": str(e)}
+            return {"error": str(e)}
 
     def delete(self, data):
 
