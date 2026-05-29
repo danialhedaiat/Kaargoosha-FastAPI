@@ -2,8 +2,8 @@ import traceback
 
 from core.database import SessionLocal, get_db
 from core.settings import logger
-from user_management.models import UserModel, UserSocialMediaID
-from user_management.schema import UserCompleteSchema
+from user_management.models import UserModel, UserSocialMediaID, Role
+from user_management.schema import UserCompleteSchema, RoleResponseSchema
 
 
 class UserService:
@@ -93,6 +93,21 @@ class UserService:
 
 
 class RoleService:
+    def __init__(self):
+        self.db: SessionLocal = get_db()
+
+    def create_role(self, data):
+        try:
+            role = Role(name=data["role"])
+            self.db.add(role)
+            self.db.commit()
+            self.db.refresh(role)
+
+            return RoleResponseSchema.model_validate(role).model_dump_json()
+        except Exception as exc:
+            logger.error(traceback.format_exc())
+            logger.error(exc)
+            return {"message": str(exc)}
 
     @staticmethod
     def is_admin(user: UserModel) -> bool:
