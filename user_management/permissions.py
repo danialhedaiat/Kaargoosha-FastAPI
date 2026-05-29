@@ -1,3 +1,9 @@
+import functools
+
+from core.settings import settings, logger
+from user_management.models import UserModel
+
+
 class Permissions:
     # User
     USER_CREATE  = "user.create"
@@ -30,3 +36,29 @@ def has_permission(user: UserModel, codename: str) -> bool:
         for user_role in user.role
         for role_permission in user_role.role.permissions
     )
+
+
+def permission(codename: str):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(self, data: dict, *args, **kwargs):
+            try:
+                requester_id = data.get("requested_by")
+                if not requester_id:
+                    return {"error": "requested_by is required"}
+
+                from user_management.models import UserModel
+
+                user = self.db.query(UserModel).filter_by(id=requester_id).first()
+
+                if not has_permission(user, codename):
+                    return {"error": f"forbidden: missing permission '{codename}'"}
+
+                return func(self, data, *args, **kwargs)
+
+            except Exception as e:
+                logger.error(e)
+                return {"error": str(e)}
+
+        return wrapper
+    return decorator
