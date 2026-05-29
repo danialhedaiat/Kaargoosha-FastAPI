@@ -1,5 +1,7 @@
 import traceback
 
+from sqlalchemy.exc import IntegrityError
+
 from core.database import SessionLocal, get_db
 from core.settings import logger
 from user_management.models import UserModel, UserSocialMediaID, Role
@@ -83,15 +85,24 @@ class UserService:
 
 
 class RoleService:
+
     def __init__(self):
         self.db: SessionLocal = get_db()
 
-    def create_role(self, data):
+    def create_role(self, data: dict):
         try:
-            role = Role(name=data["role"])
+            role = Role(name=data["name"])
             self.db.add(role)
             self.db.commit()
             self.db.refresh(role)
+            return {"id": role.id, "name": role.name}
+        except IntegrityError:
+            self.db.rollback()
+            return {"error": "Role already exists"}
+        except Exception as e:
+            self.db.rollback()
+            logger.error(e)
+            return {"error": str(e)}
 
             return RoleResponseSchema.model_validate(role).model_dump_json()
         except Exception as exc:
