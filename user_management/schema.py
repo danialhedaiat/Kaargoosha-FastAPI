@@ -80,7 +80,7 @@ class UserCompleteSchema(UserBaseSchema):
     is_verify: bool
     create_date: datetime
     social_media: List[UserSocialMediaResponseSchema] = []
-    role: List[AssignRoleResponseSchema] = []
+    role_permission: List[AssignRoleResponseSchema] = []
 
     class Config:
         from_attributes = True
