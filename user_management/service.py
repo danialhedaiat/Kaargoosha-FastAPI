@@ -1,3 +1,5 @@
+import traceback
+
 from core.database import SessionLocal, get_db
 from core.settings import logger
 from user_management.models import UserModel, UserSocialMediaID
@@ -15,7 +17,11 @@ class UserService:
             return {"message": "User already exists"}
         return {"message": "User does not exist"}
 
-    def create(self, data):
+    def get_user_by_username(self, data):
+        user_social_media = self.db.query(UserSocialMediaID).filter_by(username=data["username"],
+                                                          social_media=data["social_media"]).first()
+        return UserCompleteSchema.model_validate(user_social_media.user).model_dump_json()
+
     def create_user(self, data):
         try:
             with self.db.begin():
@@ -44,7 +50,6 @@ class UserService:
 
             return UserCompleteSchema.model_validate(user).model_dump_json()
         except Exception as e:
-            import traceback
             logger.error(traceback.format_exc())
             logger.error(e)
             return {"message": str(e)}
