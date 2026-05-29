@@ -4,9 +4,9 @@ import traceback
 from sqlalchemy.exc import IntegrityError
 
 from core.database import SessionLocal, get_db
-from core.settings import logger
-from user_management.models import UserModel, UserSocialMediaID, Role, UserRole
-from user_management.schema import UserCompleteSchema, RoleResponseSchema
+from core.settings import logger, settings
+from user_management.models import UserModel, UserSocialMediaID, Role, UserRole, RolePermission
+from user_management.permissions import Permissions
 from user_management.schema import UserCompleteSchema, RoleResponseSchema, AssignRoleResponseSchema
 
 
@@ -178,8 +178,6 @@ class RoleService:
     def get_user_roles(self, user_id: int):
         user = self.db.query(UserModel).filter_by(id=user_id).first()
         if not user:
-            return {"error": "User not found"}
-        return [{"id": user_role.role.id, "name": user_role.role.name} for user_role in user.role]
             return json.dumps({"error": "User not found"})
         return [AssignRoleResponseSchema().model_validate(user_role).model_dump_json() for user_role in user.role]
 
