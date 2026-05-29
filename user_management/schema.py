@@ -40,6 +40,9 @@ class RoleBaseSchema(BaseModel):
 class RoleResponseSchema(RoleBaseSchema):
     id: int
 
+    class Config:
+        from_attributes = True
+
 
 class UserRoleBaseSchema(BaseModel):
     user_id: int
