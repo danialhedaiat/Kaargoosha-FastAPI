@@ -78,18 +78,7 @@ class UserService:
             return {"error": str(e)}
 
     def delete(self, data):
-
-        requester_id = data["requested_by"]
-        target_user_id = data["user_id"]
-
-        requester = self.db.query(UserModel).get(requester_id)
-
-        if not RoleService.is_admin(requester):
-            return {"error": "forbidden"}
-
-        self.db.query(UserModel).delete(target_user_id)
-
-        return {"status": "deleted"}
+        pass
 
 
 class RoleService:
