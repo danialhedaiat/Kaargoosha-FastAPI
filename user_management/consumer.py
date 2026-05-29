@@ -35,7 +35,7 @@ class UserConsumer:
             service = UserService()
 
             if method.routing_key == "user.create":
-                result = service.create(data)
+                result = service.create_user(data)
                 self.response(ch, method, properties, result)
 
             elif method.routing_key == "user.check_phone_number":
