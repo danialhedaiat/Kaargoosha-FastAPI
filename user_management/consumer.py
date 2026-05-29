@@ -46,13 +46,9 @@ class UserConsumer:
                 result = service.join_user(data)
                 self.response(ch, method, properties, result)
 
-            elif method.routing_key == "user.update":
-                logger.info("update")
-            elif method.routing_key == "user.get":
-                logger.info("get")
-            elif method.routing_key == "user.delete":
-                UserService().delete()
-
+            elif method.routing_key == "user.get_user_by_username":
+                result = service.get_user_by_username(data)
+                self.response(ch, method, properties, result)
 
         except Exception as e:
             import traceback
