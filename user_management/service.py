@@ -150,12 +150,28 @@ class RoleService:
             logger.error(e)
             return {"error": str(e)}
 
-    @staticmethod
-    def is_admin(user: UserModel) -> bool:
-        if not user:
-            return False
+    def revoke_role(self, data: dict):
+        """data = {requested_by, user_id, role_id}"""
+        try:
+            # requester = self.db.query(UserModel).filter_by(id=data["requested_by"]).first()
 
-        return any(
-            role.role.name == "admin"
-            for role in user.role
-        )
+
+            user_role = self.db.query(UserRole).filter_by(
+                user_id=data["user_id"], role_id=data["role_id"]
+            ).first()
+            if not user_role:
+                return {"error": "User does not have this role"}
+
+            self.db.delete(user_role)
+            self.db.commit()
+            return {"status": "role revoked"}
+        except Exception as e:
+            self.db.rollback()
+            logger.error(e)
+            return {"error": str(e)}
+
+    def get_user_roles(self, user_id: int):
+        user = self.db.query(UserModel).filter_by(id=user_id).first()
+        if not user:
+            return {"error": "User not found"}
+        return [{"id": user_role.role.id, "name": user_role.role.name} for user_role in user.role]
