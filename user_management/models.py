@@ -16,7 +16,7 @@ class UserModel(Base):
     last_name: Mapped[str]= mapped_column(String(50), nullable=False)
     create_date: Mapped[datetime]= mapped_column(DateTime, default=datetime.datetime.now())
 
-    user_social_medias = relationship(
+    social_media = relationship(
         "UserSocialMediaID",
         back_populates='user',
         cascade='all, delete, delete-orphan',
