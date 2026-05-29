@@ -19,3 +19,14 @@ class Permissions:
     PERMISSION_UPDATE  = "role.update"
     PERMISSION_DELETE  = "role.delete"
     PERMISSION_ASSIGN  = "role.assign"
+
+def has_permission(user: UserModel, codename: str) -> bool:
+    if not user:
+        return False
+    if user.phone_number == settings.GOD:
+        return True
+    return any(
+        role_permission.codename == codename
+        for user_role in user.role
+        for role_permission in user_role.role.permissions
+    )
