@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from core.database import SessionLocal, get_db
 from core.settings import logger, settings
 from user_management.models import UserModel, UserSocialMediaID, Role, UserRole, RolePermission
-from user_management.permissions import Permissions
+from user_management.permissions import Permissions, permission
 from user_management.schema import UserCompleteSchema, RoleResponseSchema, AssignRoleResponseSchema, \
     RolePermissionResponseSchema
 
@@ -87,6 +87,7 @@ class UserService:
             logger.error(e)
             return json.dumps({"error": str(e)})
 
+    @permission(Permissions.USER_DELETE)
     def delete(self, data):
         pass
 
@@ -96,6 +97,8 @@ class RoleService:
     def __init__(self):
         self.db: SessionLocal = get_db()
 
+
+    @permission(Permissions.ROLE_CREATE)
     def create_role(self, data: dict):
         try:
             role = Role(name=data["name"])
@@ -111,16 +114,22 @@ class RoleService:
             logger.error(e)
             return json.dumps({"error": str(e)})
 
+
+    @permission(Permissions.ROLE_READ)
     def get_all_roles(self):
         roles = self.db.query(Role).all()
         return [RoleResponseSchema().model_validate(role).model_dump_json() for role in roles]
 
+
+    @permission(Permissions.ROLE_READ)
     def get_role(self, role_id: int):
         role = self.db.query(Role).filter_by(id=role_id).first()
         if not role:
             return {"error": "Role not found"}
         return RoleResponseSchema().model_validate(role).model_dump_json()
 
+
+    @permission(Permissions.ROLE_DELETE)
     def delete_role(self, role_id: int):
         try:
             role = self.db.query(Role).filter_by(id=role_id).first()
@@ -137,6 +146,7 @@ class RoleService:
 
     # ── Assign / Revoke roles on users ─────────────────────────
 
+    @permission(Permissions.ROLE_ASSIGN)
     def assign_role(self, data: dict):
         """data = {requested_by, user_id, role_id}"""
         try:
@@ -157,11 +167,10 @@ class RoleService:
             logger.error(e)
             return json.dumps({"error": str(e)})
 
+    @permission(Permissions.ROLE_REVOKE)
     def revoke_role(self, data: dict):
         """data = {requested_by, user_id, role_id}"""
         try:
-            # requester = self.db.query(UserModel).filter_by(id=data["requested_by"]).first()
-
             user_role = self.db.query(UserRole).filter_by(
                 user_id=data["user_id"], role_id=data["role_id"]
             ).first()
@@ -176,6 +185,7 @@ class RoleService:
             logger.error(e)
             return json.dumps({"error": str(e)})
 
+    @permission(Permissions.ROLE_READ)
     def get_user_roles(self, user_id: int):
         user = self.db.query(UserModel).filter_by(id=user_id).first()
         if not user:
@@ -189,8 +199,8 @@ class PermissionService:
 
     # ── Permission CRUD ────────────────────────────────────────
 
+    @permission(Permissions.PERMISSION_CREATE)
     def create_permission(self, data: dict):
-
         role_permission = RolePermission(role_id=data["role_id"], codename=data["codename"])
         self.db.add(role_permission)
         self.db.commit()
@@ -198,9 +208,11 @@ class PermissionService:
 
         return RolePermissionResponseSchema().model_validate(role_permission).model_dump_json()
 
+    @permission(Permissions.PERMISSION_READ)
     def get_all_permissions(self):
         return Permissions().__dict__
 
+    @permission(Permissions.PERMISSION_DELETE)
     def delete_permission_from_role(self, data: dict):
         permission = self.db.query(RolePermission).filter_by(codename=data["permission_codename"]).first()
         if not permission:
@@ -216,6 +228,7 @@ class PermissionService:
         self.db.commit()
         return {"status": "revoked"}
 
+    @permission(Permissions.PERMISSION_READ)
     def get_role_permissions(self, data: dict):
         role = self.db.query(Role).filter_by(id=data["role_id"]).first()
         if not role:
