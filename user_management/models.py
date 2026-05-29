@@ -11,17 +11,17 @@ class UserModel(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     phone_number: Mapped[str] = mapped_column(String(15), unique=True)
-    is_verify: Mapped[bool]= mapped_column(Boolean, default=False)
-    first_name: Mapped[str]= mapped_column(String(50), nullable=False)
-    last_name: Mapped[str]= mapped_column(String(50), nullable=False)
-    create_date: Mapped[datetime]= mapped_column(DateTime, default=datetime.datetime.now())
+    is_verify: Mapped[bool] = mapped_column(Boolean, default=False)
+    first_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    create_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.datetime.now())
 
     social_media = relationship(
         "UserSocialMediaID",
         back_populates='user',
         cascade='all, delete, delete-orphan',
     )
-    role = relationship("UserRole", back_populates="user", cascade='all, delete, delete-orphan')
+    roles = relationship("UserRole", back_populates="user", cascade='all, delete, delete-orphan')
 
 
 class UserSocialMediaID(Base):
@@ -49,8 +49,8 @@ class Role(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(30), nullable=False)
 
-    user = relationship("UserRole", back_populates="role", cascade="all, delete, delete-orphan")
-    permission = relationship("role_permission", back_populates="role", cascade="all, delete, delete-orphan")
+    users = relationship("UserRole", back_populates="role", cascade="all, delete, delete-orphan")
+    permissions = relationship("RolePermission", back_populates="role", cascade="all, delete, delete-orphan")  # 👈 "RolePermission" string not "role_permission" tablename
 
 
 class RolePermission(Base):
@@ -61,10 +61,10 @@ class RolePermission(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id"), nullable=False)
+    role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id"), nullable=False)  # 👈 removed duplicate
     codename: Mapped[str] = mapped_column(String(100), nullable=False)
 
-    role = relationship("roles", back_populates="permissions")
+    role = relationship("Role", back_populates="permissions")
 
 
 class UserRole(Base):
@@ -75,10 +75,8 @@ class UserRole(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=False)
+    role_id: Mapped[int] = mapped_column(Integer, ForeignKey('roles.id'), nullable=False)
 
-    user_id = mapped_column(Integer, ForeignKey('users.id'), nullable=False)
-    role_id = mapped_column(Integer, ForeignKey('roles.id'), nullable=False)
-
-    user = relationship("UserModel", back_populates="role")
-    role = relationship("Role", back_populates="user")
-    permissions = relationship("UserPermission", back_populates="role_permission")
+    user = relationship("UserModel", back_populates="roles")
+    role = relationship("Role", back_populates="users")
