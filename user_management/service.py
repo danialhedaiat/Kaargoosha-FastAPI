@@ -75,8 +75,10 @@ class UserService:
             )
 
             self.db.add(user_social_media)
-
+            self.db.commit()
+            self.db.refresh(user_social_media)
             return UserCompleteSchema.model_validate(user).model_dump_json()
+
         except Exception as e:
             self.db.rollback()
             logger.error(traceback.format_exc())
