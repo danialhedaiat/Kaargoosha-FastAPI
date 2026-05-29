@@ -42,6 +42,10 @@ class UserConsumer:
                 result = service.check_phone_number_exist(data)
                 self.response(ch, method, properties, result)
 
+            elif method.routing_key == "user.join":
+                result = service.join_user(data)
+                self.response(ch, method, properties, result)
+
             elif method.routing_key == "user.update":
                 logger.info("update")
             elif method.routing_key == "user.get":
