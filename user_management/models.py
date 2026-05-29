@@ -36,7 +36,7 @@ class UserSocialMediaID(Base):
     username: Mapped[str] = mapped_column(String(100), nullable=False)
     social_media: Mapped[str] = mapped_column(String(50), nullable=False)
 
-    user = relationship("UserModel", back_populates="user_social_medias")
+    user = relationship("UserModel", back_populates="social_media")
 
 
 class Role(Base):
