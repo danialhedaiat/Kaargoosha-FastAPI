@@ -27,14 +27,14 @@ class UserWithoutRoleSchema(UserBaseSchema):
     id: int
     is_verify: bool
     create_date: datetime
-    user_social_medias: List[UserSocialMediaResponseSchema] = []
+    social_media: List[UserSocialMediaResponseSchema] = []
 
 
 class UserCompleteSchema(UserBaseSchema):
     id: int
     is_verify: bool
     create_date: datetime
-    user_social_medias: List[UserSocialMediaResponseSchema] = []
+    social_media: List[UserSocialMediaResponseSchema] = []
 
     class Config:
         from_attributes = True
