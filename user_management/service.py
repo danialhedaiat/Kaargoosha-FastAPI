@@ -224,17 +224,3 @@ class PermissionService:
             RolePermissionResponseSchema().model_validate(role_permission).model_dump_json()
             for role_permission in role.permission
         ]
-
-    # ── The core check ─────────────────────────────────────────
-
-    @staticmethod
-    def has_permission(user: UserModel, codename: str) -> bool:
-        if not user:
-            return False
-        if user.phone_number == settings.GOD:
-            return True
-        return any(
-            role_permission.codename == codename
-            for user_role in user.role
-            for role_permission in user_role.role.permissions
-        )
