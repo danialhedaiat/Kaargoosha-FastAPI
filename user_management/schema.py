@@ -44,12 +44,26 @@ class RoleResponseSchema(RoleBaseSchema):
         from_attributes = True
 
 
-class AssignRoleSchema(BaseModel):
-    requested_by: int
+class AssignRoleBaseSchema(BaseModel):
     user_id: int
     role_id: int
 
-class RevokeRoleSchema(BaseModel):
+
+class AssignRoleSchema(AssignRoleBaseSchema):
     requested_by: int
+
+
+class AssignRoleResponseSchema(AssignRoleBaseSchema):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class RevokeRoleBaseSchema(BaseModel):
     user_id: int
     role_id: int
+
+
+class RevokeRoleSchema(RevokeRoleBaseSchema):
+    requested_by: int
