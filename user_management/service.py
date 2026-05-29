@@ -54,6 +54,29 @@ class UserService:
             logger.error(e)
             return {"message": str(e)}
 
+    def join_user(self, data):
+        try:
+            user = self.db.query(UserModel).filter_by(phone_number=data["phone_number"]).first()
+            exists = self.db.query(UserSocialMediaID).filter_by(
+                username=data["username"],
+                social_media=data["social_media"]
+            ).first()
+            if exists:
+                raise Exception("User already joined")
+            user_social_media = UserSocialMediaID(
+                user_id=user.id,
+                username=data["username"],
+                social_media=data["social_media"]
+            )
+
+            self.db.add(user_social_media)
+
+            return UserCompleteSchema.model_validate(user).model_dump_json()
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return {"message": str(e)}
+
     def delete(self, data):
 
         requester_id = data["requested_by"]
