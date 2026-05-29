@@ -23,6 +23,8 @@ class UserService:
     def get_user_by_username(self, data):
         user_social_media = self.db.query(UserSocialMediaID).filter_by(username=data["username"],
                                                                        social_media=data["social_media"]).first()
+        if not user_social_media:
+            return json.dumps({"error": "User does not exist"})
         return UserCompleteSchema.model_validate(user_social_media.user).model_dump_json()
 
     def create_user(self, data):
