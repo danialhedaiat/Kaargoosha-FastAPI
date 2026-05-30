@@ -112,7 +112,6 @@ class RoleService:
     def __init__(self):
         self.db: SessionLocal = get_db()
 
-
     @permission(Permissions.ROLE_CREATE)
     def create_role(self, data: dict):
         try:
@@ -120,7 +119,7 @@ class RoleService:
             self.db.add(role)
             self.db.commit()
             self.db.refresh(role)
-            return RoleResponseSchema().model_validate(role).model_dump_json()
+            return RoleResponseSchema.model_validate(role).model_dump_json()
         except IntegrityError:
             self.db.rollback()
             return json.dumps({"error": "Role already exists"})
@@ -129,9 +128,8 @@ class RoleService:
             logger.error(e)
             return json.dumps({"error": str(e)})
 
-
     @permission(Permissions.ROLE_READ)
-    def get_all_roles(self):
+    def get_all_roles(self, data):
         roles = self.db.query(Role).all()
         return json.dumps({"roles": [
             RoleResponseSchema.model_validate(role).model_dump()
@@ -139,17 +137,16 @@ class RoleService:
         },  ensure_ascii=False)
 
     @permission(Permissions.ROLE_READ)
-    def get_role(self, role_id: int):
-        role = self.db.query(Role).filter_by(id=role_id).first()
+    def get_role(self, data: dict):
+        role = self.db.query(Role).filter_by(id=data["role_id"]).first()
         if not role:
             return {"error": "Role not found"}
-        return RoleResponseSchema().model_validate(role).model_dump_json()
-
+        return RoleResponseSchema.model_validate(role).model_dump_json()
 
     @permission(Permissions.ROLE_DELETE)
-    def delete_role(self, role_id: int):
+    def delete_role(self, data: dict):
         try:
-            role = self.db.query(Role).filter_by(id=role_id).first()
+            role = self.db.query(Role).filter_by(id=data["role_id"]).first()
             if not role:
                 return json.dumps({"error": "Role not found"})
 
@@ -178,7 +175,7 @@ class RoleService:
             user_role = UserRole(user_id=data["user_id"], role_id=data["role_id"])
             self.db.add(user_role)
             self.db.commit()
-            return AssignRoleResponseSchema().model_validate(user_role).model_dump_json()
+            return AssignRoleResponseSchema.model_validate(user_role).model_dump_json()
         except Exception as e:
             self.db.rollback()
             logger.error(e)
@@ -203,11 +200,11 @@ class RoleService:
             return json.dumps({"error": str(e)})
 
     @permission(Permissions.ROLE_READ)
-    def get_user_roles(self, user_id: int):
-        user = self.db.query(UserModel).filter_by(id=user_id).first()
+    def get_user_roles(self, data: dict):
+        user = self.db.query(UserModel).filter_by(id=data["role_id"]).first()
         if not user:
             return json.dumps({"error": "User not found"})
-        return [AssignRoleResponseSchema().model_validate(user_role).model_dump_json() for user_role in user.role]
+        return [AssignRoleResponseSchema.model_validate(user_role).model_dump_json() for user_role in user.role]
 
 
 class PermissionService:
@@ -223,7 +220,7 @@ class PermissionService:
         self.db.commit()
         self.db.refresh(role_permission)
 
-        return RolePermissionResponseSchema().model_validate(role_permission).model_dump_json()
+        return RolePermissionResponseSchema.model_validate(role_permission).model_dump_json()
 
     @permission(Permissions.PERMISSION_READ)
     def get_all_permissions(self):
@@ -251,6 +248,6 @@ class PermissionService:
         if not role:
             return {"error": "Role not found"}
         return [
-            RolePermissionResponseSchema().model_validate(role_permission).model_dump_json()
+            RolePermissionResponseSchema.model_validate(role_permission).model_dump_json()
             for role_permission in role.permission
         ]
