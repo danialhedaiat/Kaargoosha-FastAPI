@@ -55,6 +55,9 @@ class UserConsumer:
             elif method.routing_key == "user.get_user_by_username":
                 result = service.get_user_by_username(data)
 
+            elif method.routing_key == "user.check_admin_menu_permission":
+                result = service.check_admin_menu_permission(data)
+
             self.response(ch, method, properties, result)
 
         except Exception as e:
