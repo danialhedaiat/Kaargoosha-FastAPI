@@ -133,8 +133,10 @@ class RoleService:
     @permission(Permissions.ROLE_READ)
     def get_all_roles(self):
         roles = self.db.query(Role).all()
-        return [RoleResponseSchema().model_validate(role).model_dump_json() for role in roles]
-
+        return json.dumps({"roles": [
+            RoleResponseSchema.model_validate(role).model_dump()
+            for role in roles]
+        },  ensure_ascii=False)
 
     @permission(Permissions.ROLE_READ)
     def get_role(self, role_id: int):
