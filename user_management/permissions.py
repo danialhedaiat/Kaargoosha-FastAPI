@@ -10,6 +10,7 @@ class Permissions:
     USER_READ    = "user.read"
     USER_UPDATE  = "user.update"
     USER_DELETE  = "user.delete"
+    USER_ADMIN = "user.admin"
 
     # Role
     ROLE_CREATE  = "role.create"
