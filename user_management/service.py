@@ -7,7 +7,7 @@ from core.database import SessionLocal, get_db
 from core.settings import logger, settings
 from user_management.models import UserModel, UserSocialMediaID, Role, UserRole, RolePermission
 from user_management.permissions import Permissions, permission
-from user_management.schema import UserCompleteSchema, RoleResponseSchema, AssignRoleResponseSchema, \
+from user_management.schema import UserCompleteSchema, RoleResponseSchema, AssignedRoleResponseSchema, \
     RolePermissionResponseSchema
 
 
@@ -92,7 +92,7 @@ class UserService:
             user_roles = self.db.query(UserRole).filter_by(user_id=data["user_id"]).all()
             check_permission = any(role_permission.codename == Permissions.USER_ADMIN
                                    for user_role in user_roles
-                                   for role_permission in user_role.permissions
+                                   for role_permission in user_role.role.permissions
                                    )
             if check_permission or data["phone_number"] == settings.GOD:
                 return json.dumps({"message": "User is Admin", "status": True})
@@ -131,10 +131,16 @@ class RoleService:
     @permission(Permissions.ROLE_READ)
     def get_all_roles(self, data):
         roles = self.db.query(Role).all()
-        return json.dumps({"roles": [
+        if "phone_number" in data:
+            user = self.db.query(UserModel).filter_by(phone_number=data["phone_number"]).first()
+            if user:
+                assigned_role_ids = {uesr_role.role_id for uesr_role in user.roles}
+                roles = [role for role in roles if role.id not in assigned_role_ids]
+
+        return [
             RoleResponseSchema.model_validate(role).model_dump()
             for role in roles]
-        },  ensure_ascii=False)
+
 
     @permission(Permissions.ROLE_READ)
     def get_role(self, data: dict):
@@ -164,20 +170,26 @@ class RoleService:
     def assign_role(self, data: dict):
         """data = {requested_by, user_id, role_id}"""
         try:
-            user = self.db.query(UserModel).filter_by(id=data["user_id"]).first()
+            user = self.db.query(UserModel).filter_by(phone_number=data["phone_number"]).first()
             if not user:
                 return json.dumps({"error": "User not found"})
 
             role = self.db.query(Role).filter_by(id=data["role_id"]).first()
             if not role:
-                return json.dumps({"error": "Role not found"})
+                return {"error": "Role not found"}
 
-            user_role = UserRole(user_id=data["user_id"], role_id=data["role_id"])
+            user_role = UserRole(user_id=user.id, role_id=data["role_id"])
             self.db.add(user_role)
             self.db.commit()
-            return AssignRoleResponseSchema.model_validate(user_role).model_dump_json()
+
+            return AssignedRoleResponseSchema.model_validate(user_role.user).model_dump_json()
+        except IntegrityError as e:
+            logger.info(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": "this role has already been assigned"})
         except Exception as e:
             self.db.rollback()
+            logger.info(traceback.format_exc())
             logger.error(e)
             return json.dumps({"error": str(e)})
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class UserBaseSchema(BaseModel):
@@ -29,6 +29,10 @@ class UserWithoutRoleSchema(UserBaseSchema):
     create_date: datetime
     social_media: List[UserSocialMediaResponseSchema] = []
 
+    class Config:
+        from_attributes = True
+
+
 
 class RoleBaseSchema(BaseModel):
     name: str = Field(..., max_length=30)
@@ -49,12 +53,29 @@ class AssignRoleBaseSchema(BaseModel):
 class AssignRoleSchema(AssignRoleBaseSchema):
     requested_by: int
 
-
-class AssignRoleResponseSchema(AssignRoleBaseSchema):
+class AssignedRoleResponseSchema(BaseModel):
     id: int
+    first_name: str
+    last_name: str
+    phone_number: str
+    roles: List[RoleResponseSchema] = []
 
     class Config:
         from_attributes = True
+
+    @model_validator(mode='before')
+    @classmethod
+    def extract_roles(cls, user):
+        if not hasattr(user, 'roles'):
+            return user
+
+        return {
+            "id": user.id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "phone_number": user.phone_number,
+            "roles": [ur.role for ur in user.roles]
+        }
 
 
 class RevokeRoleBaseSchema(BaseModel):
@@ -84,7 +105,15 @@ class UserCompleteSchema(UserBaseSchema):
     is_verify: bool
     create_date: datetime
     social_media: List[UserSocialMediaResponseSchema] = []
-    role_permission: List[AssignRoleResponseSchema] = []
+    roles: List[RoleResponseSchema] = []
 
     class Config:
         from_attributes = True
+
+    @model_validator(mode='before')
+    @classmethod
+    def extract_roles(cls, user):
+        if hasattr(user, 'roles'):
+            # user.roles is List[UserRole], extract the Role from each
+            user.__dict__['roles'] = [ur.role for ur in user.roles]
+        return user
