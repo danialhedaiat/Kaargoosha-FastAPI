@@ -1,4 +1,4 @@
-import logging
+import traceback
 
 import msgpack
 from pika.adapters.blocking_connection import BlockingChannel
@@ -61,7 +61,6 @@ class UserConsumer:
             self.response(ch, method, properties, result)
 
         except Exception as e:
-            import traceback
             logger.error(traceback.format_exc())
             logger.error(e)
 
@@ -95,7 +94,6 @@ class UserConsumer:
             self.response(ch, method, properties, result)
 
         except Exception as e:
-            import traceback
             logger.error(traceback.format_exc())
             logger.error(e)
 
@@ -120,18 +118,21 @@ class UserConsumer:
             self.response(ch, method, properties, result)
 
         except Exception as e:
-            import traceback
             logger.error(traceback.format_exc())
             logger.error(e)
 
     @staticmethod
     def response(ch, method, properties, response):
-        response = msgpack.packb(response)
-        ch.basic_publish(
-            exchange='',
-            routing_key=properties.reply_to,
-            properties=BasicProperties(correlation_id=properties.correlation_id),
-            body=response
-        )
+        try:
+            response = msgpack.packb(response)
+            ch.basic_publish(
+                exchange='',
+                routing_key=properties.reply_to,
+                properties=BasicProperties(correlation_id=properties.correlation_id),
+                body=response
+            )
 
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as e:
+            logger.info(traceback.format_exc())
+            logger.info(e)
