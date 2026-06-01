@@ -223,17 +223,19 @@ class PermissionService:
         return RolePermissionResponseSchema.model_validate(role_permission).model_dump_json()
 
     @permission(Permissions.PERMISSION_READ)
-    def get_all_permissions(self):
-        return Permissions().__dict__
+    def get_all_permissions(self, data):
+        permissions_dict = {
+            key: value
+            for key, value in vars(Permissions).items()
+            if not key.startswith("__")
+        }
+        return permissions_dict
 
     @permission(Permissions.PERMISSION_DELETE)
-    def delete_permission_from_role(self, data: dict):
-        permission = self.db.query(RolePermission).filter_by(codename=data["permission_codename"]).first()
-        if not permission:
-            return {"error": "Permission not found"}
+    def revoke_permission_from_role(self, data: dict):
 
         role_permission = self.db.query(RolePermission).filter_by(
-            role_id=data["role_id"], permission_id=permission.id
+            role_id=data["role_id"], codename=data["codename"]
         ).first()
         if not role_permission:
             return {"error": "Role does not have this permission"}
@@ -248,6 +250,6 @@ class PermissionService:
         if not role:
             return {"error": "Role not found"}
         return [
-            RolePermissionResponseSchema.model_validate(role_permission).model_dump_json()
-            for role_permission in role.permission
+            RolePermissionResponseSchema.model_validate(role_permission).model_dump()
+            for role_permission in role.permissions
         ]

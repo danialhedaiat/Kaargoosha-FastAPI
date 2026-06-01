@@ -68,11 +68,15 @@ class RevokeRoleSchema(RevokeRoleBaseSchema):
 
 class RolePermissionBaseSchema(BaseModel):
     codename: str = Field(..., )
+    role_id: int
     role: RoleResponseSchema
 
 
 class RolePermissionResponseSchema(RolePermissionBaseSchema):
     id: int
+
+    class Config:
+        from_attributes = True
 
 
 class UserCompleteSchema(UserBaseSchema):
