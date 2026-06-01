@@ -114,8 +114,8 @@ class UserConsumer:
             elif method.routing_key == "permission.get_role_permission":
                 result = service.get_role_permissions(data)
 
-            elif method.routing_key == "permission.delete":
-                result = service.delete_permission_from_role(data)
+            elif method.routing_key == "permission.revoke":
+                result = service.revoke_permission_from_role(data)
 
             self.response(ch, method, properties, result)
 
