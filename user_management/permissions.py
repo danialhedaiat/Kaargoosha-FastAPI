@@ -20,6 +20,9 @@ class Permissions:
     ROLE_ASSIGN  = "role.assign"
     ROLE_REVOKE  = "role.revoke"
 
+    # Loan
+    LOAN_APPROVE = "loan.approve"
+
     #Permission
     PERMISSION_CREATE  = "role.create"
     PERMISSION_READ    = "role.read"
