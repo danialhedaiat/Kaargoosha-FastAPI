@@ -102,6 +102,22 @@ class UserService:
             logger.error(e)
             return json.dumps({"error": str(e)})
 
+    def check_loan_create_permission(self, data):
+        try:
+            user_roles = self.db.query(UserRole).filter_by(user_id=data["user_id"]).all()
+            check_permission = any(
+                role_permission.codename == Permissions.LOAN_CREATE
+                for user_role in user_roles
+                for role_permission in user_role.role.permissions
+            )
+            if check_permission or data.get("phone_number") == settings.GOD:
+                return json.dumps({"status": True})
+            return json.dumps({"status": False})
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": str(e)})
+
     @permission(Permissions.USER_DELETE)
     def delete(self, data):
         pass
