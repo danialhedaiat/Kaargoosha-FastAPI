@@ -1,7 +1,8 @@
+import calendar
 import datetime
 import enum
 
-from sqlalchemy import Integer, String, Numeric, Enum, DateTime, ForeignKey
+from sqlalchemy import Integer, String, Numeric, Enum, DateTime, Date, ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from core.database import Base
@@ -29,6 +30,25 @@ class Loan(Base):
 
     user = relationship("UserModel", foreign_keys=[user_id], backref="loans")
     approver = relationship("UserModel", foreign_keys=[approved_by])
+
+
+class InstallmentStatus(str, enum.Enum):
+    pending = "pending"
+    paid = "paid"
+
+
+class Installment(Base):
+    __tablename__ = "installments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    loan_id: Mapped[int] = mapped_column(Integer, ForeignKey("loans.id"), nullable=False)
+    amount: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    due_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
+    status: Mapped[InstallmentStatus] = mapped_column(Enum(InstallmentStatus), nullable=False, default=InstallmentStatus.pending)
+    paid_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.now)
+
+    loan = relationship("Loan", backref="installments")
 
 
 class FundPool(Base):
