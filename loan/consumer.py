@@ -35,6 +35,9 @@ class LoanConsumer:
             if method.routing_key == 'loan.approve':
                 result = service.approve(data)
 
+            elif method.routing_key == 'loan.reject':
+                result = service.reject(data)
+
             self.response(ch, method, properties, result)
 
         except Exception as e:
