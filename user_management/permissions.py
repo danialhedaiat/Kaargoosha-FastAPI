@@ -22,6 +22,7 @@ class Permissions:
 
     # Loan
     LOAN_APPROVE = "loan.approve"
+    LOAN_REJECT  = "loan.reject"
 
     #Permission
     PERMISSION_CREATE  = "role.create"
