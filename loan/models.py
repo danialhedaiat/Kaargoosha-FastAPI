@@ -29,3 +29,11 @@ class Loan(Base):
 
     user = relationship("UserModel", foreign_keys=[user_id], backref="loans")
     approver = relationship("UserModel", foreign_keys=[approved_by])
+
+
+class FundPool(Base):
+    __tablename__ = "fund_pool"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    balance: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False, default=0)
+    updated_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)

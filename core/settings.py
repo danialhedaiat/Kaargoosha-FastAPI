@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     RABBITMQ_PASSWORD: str
     ALEMBIC_DATABASE_URL: str
     GOD: str
+    LOAN_MAX_AMOUNT: float = 50_000_000
 
     model_config = SettingsConfigDict(env_file=ENV_PATH)
 
