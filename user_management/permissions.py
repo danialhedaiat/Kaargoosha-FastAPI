@@ -21,6 +21,8 @@ class Permissions:
     ROLE_REVOKE  = "role.revoke"
 
     # Loan
+    LOAN_CREATE  = "loan.create"
+    LOAN_READ    = "loan.read"
     LOAN_APPROVE = "loan.approve"
     LOAN_REJECT  = "loan.reject"
 
