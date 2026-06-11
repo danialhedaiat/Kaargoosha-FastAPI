@@ -213,10 +213,10 @@ class RoleService:
 
     @permission(Permissions.ROLE_READ)
     def get_user_roles(self, data: dict):
-        user = self.db.query(UserModel).filter_by(id=data["role_id"]).first()
+        user = self.db.query(UserModel).filter_by(phone_number=data["phone_number"]).first()
         if not user:
             return json.dumps({"error": "User not found"})
-        return [AssignRoleResponseSchema.model_validate(user_role).model_dump_json() for user_role in user.role]
+        return AssignedRoleResponseSchema.model_validate(user).model_dump_json()
 
 
 class PermissionService:
