@@ -122,3 +122,30 @@ class LoanRequestService:
             logger.error(traceback.format_exc())
             logger.error(e)
             return json.dumps({"error": str(e)})
+
+    @permission(Permissions.LOAN_REJECT)
+    def reject(self, data: dict):
+        try:
+            loan_id = data["loan_id"]
+            rejection_reason = data.get("rejection_reason")
+
+            loan = self.db.query(Loan).filter_by(id=loan_id).first()
+            if not loan:
+                return json.dumps({"error": "Loan not found"})
+
+            if loan.status != LoanStatus.pending:
+                return json.dumps({"error": f"Loan is already {loan.status.value}"})
+
+            loan.status = LoanStatus.rejected
+            loan.rejection_reason = rejection_reason
+
+            self.db.commit()
+            self.db.refresh(loan)
+
+            return LoanResponseSchema.model_validate(loan).model_dump_json()
+
+        except Exception as e:
+            self.db.rollback()
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": str(e)})
