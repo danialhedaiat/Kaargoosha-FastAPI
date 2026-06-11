@@ -1,5 +1,4 @@
 from datetime import datetime
-from decimal import Decimal
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -9,17 +8,17 @@ from loan.models import LoanStatus
 
 class LoanCreateSchema(BaseModel):
     user_id: int
-    amount: Decimal = Field(..., gt=0)
     duration_months: int = Field(..., gt=0)
-    monthly_amount: Decimal = Field(..., gt=0)
+    member_chat_id: Optional[int] = None
 
 
 class LoanResponseSchema(BaseModel):
     id: int
     user_id: int
-    amount: Decimal
+    amount: Optional[int] = None
     duration_months: int
-    monthly_amount: Decimal
+    monthly_amount: Optional[int] = None
+    member_chat_id: Optional[int] = None
     status: LoanStatus
     approved_by: Optional[int] = None
     approved_at: Optional[datetime] = None

@@ -18,9 +18,8 @@ class LoanService:
     def create(self, data: dict):
         try:
             user_id = data["user_id"]
-            amount = data["amount"]
             duration_months = data["duration_months"]
-            monthly_amount = data["monthly_amount"]
+            member_chat_id = data.get("member_chat_id")
 
             active_loan = self.db.query(Loan).filter(
                 Loan.user_id == user_id,
@@ -29,18 +28,10 @@ class LoanService:
             if active_loan:
                 return json.dumps({"error": "User already has an active or pending loan"})
 
-            if float(amount) > settings.LOAN_MAX_AMOUNT:
-                return json.dumps({"error": f"Amount exceeds maximum allowed limit of {settings.LOAN_MAX_AMOUNT}"})
-
-            fund_pool = self.db.query(FundPool).first()
-            if not fund_pool or float(fund_pool.balance) < float(amount):
-                return json.dumps({"error": "Requested amount exceeds available fund pool balance"})
-
             loan = Loan(
                 user_id=user_id,
-                amount=amount,
                 duration_months=duration_months,
-                monthly_amount=monthly_amount,
+                member_chat_id=member_chat_id,
                 status=LoanStatus.pending,
             )
             self.db.add(loan)
@@ -88,6 +79,7 @@ class LoanRequestService:
         try:
             loan_id = data["loan_id"]
             approver_id = data["requested_by"]
+            amount = int(data["amount"])
 
             loan = self.db.query(Loan).filter_by(id=loan_id).first()
             if not loan:
@@ -96,21 +88,28 @@ class LoanRequestService:
             if loan.status != LoanStatus.pending:
                 return json.dumps({"error": f"Loan is already {loan.status.value}"})
 
+            if amount > settings.LOAN_MAX_AMOUNT:
+                return json.dumps({"error": f"Amount exceeds maximum allowed limit of {settings.LOAN_MAX_AMOUNT}"})
+
             fund_pool = self.db.query(FundPool).first()
-            if not fund_pool or float(fund_pool.balance) < float(loan.amount):
+            if not fund_pool or int(fund_pool.balance) < amount:
                 return json.dumps({"error": "Insufficient fund pool balance"})
 
+            monthly_amount = amount // loan.duration_months
+
+            loan.amount = amount
+            loan.monthly_amount = monthly_amount
             loan.status = LoanStatus.approved
             loan.approved_by = approver_id
             loan.approved_at = datetime.datetime.now()
-            fund_pool.balance = float(fund_pool.balance) - float(loan.amount)
+            fund_pool.balance = int(fund_pool.balance) - amount
 
             self.db.flush()
 
             from account.service import AccountService
-            AccountService(db=self.db).credit(loan.user_id, float(loan.amount))
+            AccountService(db=self.db).credit(loan.user_id, amount)
 
-            InstallmentService(db=self.db).generate(loan.id, float(loan.monthly_amount), loan.duration_months)
+            InstallmentService(db=self.db).generate(loan.id, monthly_amount, loan.duration_months)
 
             self.db.commit()
             self.db.refresh(loan)

@@ -2,7 +2,7 @@ import calendar
 import datetime
 import enum
 
-from sqlalchemy import Integer, String, Numeric, Enum, DateTime, Date, ForeignKey
+from sqlalchemy import Integer, String, Enum, DateTime, Date, ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from core.database import Base
@@ -19,9 +19,10 @@ class Loan(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    amount: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, nullable=True)
     duration_months: Mapped[int] = mapped_column(Integer, nullable=False)
-    monthly_amount: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    monthly_amount: Mapped[int] = mapped_column(Integer, nullable=True)
+    member_chat_id: Mapped[int] = mapped_column(Integer, nullable=True)
     status: Mapped[LoanStatus] = mapped_column(Enum(LoanStatus), nullable=False, default=LoanStatus.pending)
     approved_by: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     approved_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
@@ -42,7 +43,7 @@ class Installment(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     loan_id: Mapped[int] = mapped_column(Integer, ForeignKey("loans.id"), nullable=False)
-    amount: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
     due_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
     status: Mapped[InstallmentStatus] = mapped_column(Enum(InstallmentStatus), nullable=False, default=InstallmentStatus.pending)
     paid_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
@@ -55,5 +56,5 @@ class FundPool(Base):
     __tablename__ = "fund_pool"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    balance: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False, default=0)
+    balance: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
