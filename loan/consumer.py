@@ -6,7 +6,7 @@ from pika.adapters.blocking_connection import BlockingChannel
 
 from core.rabbitmq_connection import RabbitMQConnection
 from core.settings import logger
-from loan.service import LoanRequestService
+from loan.service import LoanService, LoanRequestService
 
 
 class LoanConsumer:
@@ -29,14 +29,16 @@ class LoanConsumer:
     def request_loan(self, ch: BlockingChannel, method, properties: BasicProperties, body):
         try:
             data = msgpack.unpackb(body)
-            service = LoanRequestService()
             result = None
 
-            if method.routing_key == 'loan.approve':
-                result = service.approve(data)
+            if method.routing_key == 'loan.create':
+                result = LoanService().create(data)
+
+            elif method.routing_key == 'loan.approve':
+                result = LoanRequestService().approve(data)
 
             elif method.routing_key == 'loan.reject':
-                result = service.reject(data)
+                result = LoanRequestService().reject(data)
 
             self.response(ch, method, properties, result)
 
