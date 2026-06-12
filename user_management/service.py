@@ -118,6 +118,23 @@ class UserService:
             logger.error(e)
             return json.dumps({"error": str(e)})
 
+    def update_chat_id(self, data):
+        try:
+            social = self.db.query(UserSocialMediaID).filter_by(
+                user_id=data["user_id"],
+                social_media=data["social_media"],
+            ).first()
+            if not social:
+                return json.dumps({"error": "Social media record not found"})
+            social.chat_id = data["chat_id"]
+            self.db.commit()
+            return json.dumps({"status": True})
+        except Exception as e:
+            self.db.rollback()
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": str(e)})
+
     @permission(Permissions.USER_DELETE)
     def delete(self, data):
         pass

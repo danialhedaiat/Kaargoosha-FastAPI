@@ -54,7 +54,7 @@ class LoanService:
             from core.notification_publisher import NotificationPublisher
 
             rows = (
-                self.db.query(UserSocialMediaID.chat_id)
+                self.db.query(UserSocialMediaID.chat_id, UserSocialMediaID.social_media)
                 .join(UserModel, UserSocialMediaID.user_id == UserModel.id)
                 .join(UserRole, UserModel.id == UserRole.user_id)
                 .join(RolePermission, UserRole.role_id == RolePermission.role_id)
@@ -62,11 +62,12 @@ class LoanService:
                     RolePermission.codename == Permissions.LOAN_APPROVE,
                     UserSocialMediaID.chat_id.isnot(None),
                 )
+                .distinct()
                 .all()
             )
 
-            chat_ids = list({row[0] for row in rows})
-            if not chat_ids:
+            recipients = [{"chat_id": row[0], "social_media": row[1]} for row in rows]
+            if not recipients:
                 return
 
             NotificationPublisher().notify_loan_request(
@@ -74,7 +75,7 @@ class LoanService:
                 first_name=loan.user.first_name,
                 last_name=loan.user.last_name,
                 duration_months=loan.duration_months,
-                chat_ids=chat_ids,
+                recipients=recipients,
             )
         except Exception:
             logger.error(traceback.format_exc())

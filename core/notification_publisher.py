@@ -1,0 +1,33 @@
+import traceback
+
+import msgpack
+
+from core.rabbitmq_connection import RabbitMQConnection
+from core.settings import logger
+
+
+class NotificationPublisher:
+    EXCHANGE = "notify"
+
+    def __init__(self):
+        self.rabbitmq = RabbitMQConnection()
+        self.channel = self.rabbitmq.channel
+        self.channel.exchange_declare(exchange=self.EXCHANGE, exchange_type="topic", durable=True)
+
+    def notify_loan_request(self, loan_id: int, first_name: str, last_name: str, duration_months: int, recipients: list):
+        try:
+            message = {
+                "loan_id": loan_id,
+                "first_name": first_name,
+                "last_name": last_name,
+                "duration_months": duration_months,
+                "recipients": recipients,
+            }
+            self.channel.basic_publish(
+                exchange=self.EXCHANGE,
+                routing_key="notify.loan_request",
+                body=msgpack.packb(message),
+            )
+            logger.info(f"Sent loan request notification for loan_id={loan_id} to {len(recipients)} recipient(s)")
+        except Exception:
+            logger.error(traceback.format_exc())
