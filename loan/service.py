@@ -38,6 +38,8 @@ class LoanService:
             self.db.commit()
             self.db.refresh(loan)
 
+            self._notify_admins(loan)
+
             return LoanResponseSchema.model_validate(loan).model_dump_json()
 
         except Exception as e:
@@ -45,6 +47,37 @@ class LoanService:
             logger.error(traceback.format_exc())
             logger.error(e)
             return json.dumps({"error": str(e)})
+
+    def _notify_admins(self, loan):
+        try:
+            from user_management.models import UserModel, UserSocialMediaID, UserRole, RolePermission
+            from core.notification_publisher import NotificationPublisher
+
+            rows = (
+                self.db.query(UserSocialMediaID.chat_id)
+                .join(UserModel, UserSocialMediaID.user_id == UserModel.id)
+                .join(UserRole, UserModel.id == UserRole.user_id)
+                .join(RolePermission, UserRole.role_id == RolePermission.role_id)
+                .filter(
+                    RolePermission.codename == Permissions.LOAN_APPROVE,
+                    UserSocialMediaID.chat_id.isnot(None),
+                )
+                .all()
+            )
+
+            chat_ids = list({row[0] for row in rows})
+            if not chat_ids:
+                return
+
+            NotificationPublisher().notify_loan_request(
+                loan_id=loan.id,
+                first_name=loan.user.first_name,
+                last_name=loan.user.last_name,
+                duration_months=loan.duration_months,
+                chat_ids=chat_ids,
+            )
+        except Exception:
+            logger.error(traceback.format_exc())
 
 
 class InstallmentService:

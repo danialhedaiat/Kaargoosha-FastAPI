@@ -35,6 +35,7 @@ class UserSocialMediaID(Base):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), nullable=False)
     username: Mapped[str] = mapped_column(String(100), nullable=False)
     social_media: Mapped[str] = mapped_column(String(50), nullable=False)
+    chat_id: Mapped[int] = mapped_column(Integer, nullable=True)
 
     user = relationship("UserModel", back_populates="social_media")
 
