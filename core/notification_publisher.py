@@ -31,3 +31,21 @@ class NotificationPublisher:
             logger.info(f"Sent loan request notification for loan_id={loan_id} to {len(recipients)} recipient(s)")
         except Exception:
             logger.error(traceback.format_exc())
+
+    def notify_loan_approved(self, member_chat_id: int, amount: int, monthly_amount: int, first_due_date, duration_months: int):
+        try:
+            message = {
+                "member_chat_id": member_chat_id,
+                "amount": amount,
+                "monthly_amount": monthly_amount,
+                "first_due_date": str(first_due_date),
+                "duration_months": duration_months,
+            }
+            self.channel.basic_publish(
+                exchange=self.EXCHANGE,
+                routing_key="notify.loan_approved",
+                body=msgpack.packb(message),
+            )
+            logger.info(f"Sent loan approved notification to member_chat_id={member_chat_id}")
+        except Exception:
+            logger.error(traceback.format_exc())

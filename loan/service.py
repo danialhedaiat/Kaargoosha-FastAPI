@@ -148,6 +148,22 @@ class LoanRequestService:
             self.db.commit()
             self.db.refresh(loan)
 
+            first_installment = (
+                self.db.query(Installment)
+                .filter_by(loan_id=loan.id)
+                .order_by(Installment.due_date)
+                .first()
+            )
+            if loan.member_chat_id and first_installment:
+                from core.notification_publisher import NotificationPublisher
+                NotificationPublisher().notify_loan_approved(
+                    member_chat_id=loan.member_chat_id,
+                    amount=loan.amount,
+                    monthly_amount=loan.monthly_amount,
+                    first_due_date=first_installment.due_date,
+                    duration_months=loan.duration_months,
+                )
+
             return LoanResponseSchema.model_validate(loan).model_dump_json()
 
         except Exception as e:
