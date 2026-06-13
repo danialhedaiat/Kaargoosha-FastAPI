@@ -15,6 +15,62 @@ class LoanService:
     def __init__(self):
         self.db: SessionLocal = get_db()
 
+    def get_client_history(self, data: dict):
+        try:
+            user_id = data["user_id"]
+            loans = (
+                self.db.query(Loan)
+                .filter_by(user_id=user_id)
+                .order_by(Loan.created_at.desc())
+                .all()
+            )
+
+            today = datetime.date.today()
+            total_paid = 0
+            total_installments = 0
+            loan_list = []
+
+            for loan in loans:
+                installments = loan.installments
+                inst_count = len(installments)
+                paid_count = sum(1 for i in installments if i.status == InstallmentStatus.paid)
+                overdue_count = sum(
+                    1 for i in installments
+                    if i.status == InstallmentStatus.pending and i.due_date < today
+                )
+                total_paid += paid_count
+                total_installments += inst_count
+
+                loan_list.append({
+                    "id": loan.id,
+                    "amount": loan.amount,
+                    "duration_months": loan.duration_months,
+                    "status": loan.status.value,
+                    "approved_at": str(loan.approved_at) if loan.approved_at else None,
+                    "rejection_reason": loan.rejection_reason,
+                    "created_at": str(loan.created_at),
+                    "installments_count": inst_count,
+                    "paid_count": paid_count,
+                    "overdue_count": overdue_count,
+                })
+
+            payment_rate = (
+                round(total_paid / total_installments * 100, 1)
+                if total_installments > 0
+                else None
+            )
+
+            return json.dumps({
+                "total_loans": len(loans),
+                "payment_rate": payment_rate,
+                "loans": loan_list,
+            })
+
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": str(e)})
+
     def create(self, data: dict):
         try:
             user_id = data["user_id"]
