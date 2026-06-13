@@ -49,3 +49,18 @@ class NotificationPublisher:
             logger.info(f"Sent loan approved notification to member_chat_id={member_chat_id}")
         except Exception:
             logger.error(traceback.format_exc())
+
+    def notify_loan_rejected(self, member_chat_id: int, rejection_reason: str):
+        try:
+            message = {
+                "member_chat_id": member_chat_id,
+                "rejection_reason": rejection_reason,
+            }
+            self.channel.basic_publish(
+                exchange=self.EXCHANGE,
+                routing_key="notify.loan_rejected",
+                body=msgpack.packb(message),
+            )
+            logger.info(f"Sent loan rejected notification to member_chat_id={member_chat_id}")
+        except Exception:
+            logger.error(traceback.format_exc())

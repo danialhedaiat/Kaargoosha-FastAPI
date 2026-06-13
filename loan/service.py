@@ -191,6 +191,13 @@ class LoanRequestService:
             self.db.commit()
             self.db.refresh(loan)
 
+            if loan.member_chat_id:
+                from core.notification_publisher import NotificationPublisher
+                NotificationPublisher().notify_loan_rejected(
+                    member_chat_id=loan.member_chat_id,
+                    rejection_reason=rejection_reason or "",
+                )
+
             return LoanResponseSchema.model_validate(loan).model_dump_json()
 
         except Exception as e:
