@@ -6,7 +6,7 @@ from pika.adapters.blocking_connection import BlockingChannel
 
 from core.rabbitmq_connection import RabbitMQConnection
 from core.settings import logger
-from loan.service import LoanService, LoanRequestService
+from loan.service import LoanService
 
 
 class LoanConsumer:
@@ -35,10 +35,10 @@ class LoanConsumer:
                 result = LoanService().create(data)
 
             elif method.routing_key == 'loan.approve':
-                result = LoanRequestService().approve(data)
+                result = LoanService().approve(data)
 
             elif method.routing_key == 'loan.reject':
-                result = LoanRequestService().reject(data)
+                result = LoanService().reject(data)
 
             elif method.routing_key == 'loan.get_client_history':
                 result = LoanService().get_client_history(data)

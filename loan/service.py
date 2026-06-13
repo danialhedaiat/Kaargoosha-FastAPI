@@ -137,34 +137,6 @@ class LoanService:
         except Exception:
             logger.error(traceback.format_exc())
 
-
-class InstallmentService:
-
-    def __init__(self, db: SessionLocal = None):
-        self.db: SessionLocal = db or get_db()
-
-    def generate(self, loan_id: int, monthly_amount: float, duration_months: int):
-        today = datetime.date.today()
-        for i in range(1, duration_months + 1):
-            month = today.month - 1 + i
-            year = today.year + month // 12
-            month = month % 12 + 1
-            day = min(today.day, calendar.monthrange(year, month)[1])
-            due_date = datetime.date(year, month, day)
-
-            self.db.add(Installment(
-                loan_id=loan_id,
-                amount=monthly_amount,
-                due_date=due_date,
-                status=InstallmentStatus.pending,
-            ))
-
-
-class LoanRequestService:
-
-    def __init__(self):
-        self.db: SessionLocal = get_db()
-
     @permission(Permissions.LOAN_APPROVE)
     def approve(self, data: dict):
         try:
@@ -196,7 +168,6 @@ class LoanRequestService:
             fund_pool.balance = int(fund_pool.balance) - amount
 
             self.db.flush()
-
             from account.service import AccountService
             AccountService(db=self.db).credit(loan.user_id, amount)
 
@@ -262,3 +233,26 @@ class LoanRequestService:
             logger.error(traceback.format_exc())
             logger.error(e)
             return json.dumps({"error": str(e)})
+
+
+class InstallmentService:
+
+    def __init__(self, db: SessionLocal = None):
+        self.db: SessionLocal = db or get_db()
+
+    def generate(self, loan_id: int, monthly_amount: float, duration_months: int):
+        today = datetime.date.today()
+        for i in range(1, duration_months + 1):
+            month = today.month - 1 + i
+            year = today.year + month // 12
+            month = month % 12 + 1
+            day = min(today.day, calendar.monthrange(year, month)[1])
+            due_date = datetime.date(year, month, day)
+
+            self.db.add(Installment(
+                loan_id=loan_id,
+                amount=monthly_amount,
+                due_date=due_date,
+                status=InstallmentStatus.pending,
+            ))
+
