@@ -128,6 +128,7 @@ class LoanService:
 
             NotificationPublisher().notify_loan_request(
                 loan_id=loan.id,
+                user_id=loan.user_id,
                 first_name=loan.user.first_name,
                 last_name=loan.user.last_name,
                 duration_months=loan.duration_months,

@@ -14,10 +14,11 @@ class NotificationPublisher:
         self.channel = self.rabbitmq.channel
         self.channel.exchange_declare(exchange=self.EXCHANGE, exchange_type="topic", durable=True)
 
-    def notify_loan_request(self, loan_id: int, first_name: str, last_name: str, duration_months: int, recipients: list):
+    def notify_loan_request(self, loan_id: int, user_id: int, first_name: str, last_name: str, duration_months: int, recipients: list):
         try:
             message = {
                 "loan_id": loan_id,
+                "user_id": user_id,
                 "first_name": first_name,
                 "last_name": last_name,
                 "duration_months": duration_months,
