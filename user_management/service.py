@@ -55,6 +55,15 @@ class UserService:
 
                 self.db.add(user_social_media)
 
+                role = self.db.query(Role).filter_by(name="member_can_get_loan").first()
+                if not role:
+                    role = Role(name="member_can_get_loan")
+                    self.db.add(role)
+                    self.db.flush()
+                    self.db.add(RolePermission(role_id=role.id, codename=Permissions.LOAN_CREATE))
+
+                self.db.add(UserRole(user_id=user.id, role_id=role.id))
+
             return UserCompleteSchema.model_validate(user).model_dump_json()
         except Exception as e:
             logger.error(traceback.format_exc())
