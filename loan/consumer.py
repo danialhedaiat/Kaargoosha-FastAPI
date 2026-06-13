@@ -43,6 +43,9 @@ class LoanConsumer:
             elif method.routing_key == 'loan.get_client_history':
                 result = LoanService().get_client_history(data)
 
+            elif method.routing_key == 'loan.get_loans':
+                result = LoanService().get_loans(data)
+
             self.response(ch, method, properties, result)
 
         except Exception as e:

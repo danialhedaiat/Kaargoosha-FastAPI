@@ -234,6 +234,44 @@ class LoanService:
             logger.error(e)
             return json.dumps({"error": str(e)})
 
+    @permission(Permissions.LOAN_READ)
+    def get_loans(self, data: dict):
+        try:
+            status_filter = data.get("status")
+            days = data.get("days")
+
+            query = self.db.query(Loan)
+
+            if status_filter:
+                query = query.filter(Loan.status == LoanStatus(status_filter))
+
+            if days:
+                from_date = datetime.datetime.now() - datetime.timedelta(days=int(days))
+                query = query.filter(Loan.created_at >= from_date)
+
+            loans = query.order_by(Loan.created_at.desc()).all()
+
+            return json.dumps([
+                {
+                    "id": loan.id,
+                    "user_id": loan.user_id,
+                    "first_name": loan.user.first_name,
+                    "last_name": loan.user.last_name,
+                    "member_chat_id": loan.member_chat_id,
+                    "duration_months": loan.duration_months,
+                    "amount": loan.amount,
+                    "status": loan.status.value,
+                    "created_at": str(loan.created_at),
+                    "rejection_reason": loan.rejection_reason,
+                }
+                for loan in loans
+            ])
+
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": str(e)})
+
 
 class InstallmentService:
 

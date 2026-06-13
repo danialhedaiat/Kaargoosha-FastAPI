@@ -82,7 +82,8 @@ class UserService:
             user_social_media = UserSocialMediaID(
                 user_id=user.id,
                 username=data["username"],
-                social_media=data["social_media"]
+                social_media=data["social_media"],
+                chat_id=data["chat_id"],
             )
 
             self.db.add(user_social_media)
