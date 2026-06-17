@@ -217,3 +217,8 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 /sqlite.db
+
+# Local AI tooling artifacts
+.claude/
+CLAUDE.md
+graphify-out/
