@@ -112,13 +112,27 @@ SQLAlchemy ORM
 Database (SQLite/PostgreSQL)
 ```
 
-## Documentation
+## Database Schema
 
-- 📖 [`docs/MODELS.md`](docs/MODELS.md) — Database schema & relationships
-- 🔄 [`docs/SERVICES.md`](docs/SERVICES.md) — Service layer architecture
-- 📨 [`docs/MESSAGE_FLOW.md`](docs/MESSAGE_FLOW.md) — RabbitMQ routing & RPC patterns
-- 📊 [`docs/database_schema_diagram.svg`](docs/database_schema_diagram.svg) — Visual schema
-- 🔗 [`docs/service_dependency_diagram.svg`](docs/service_dependency_diagram.svg) — Service interactions
+All 14 tables across the `user_management`, `account`, and `loan` domains, with
+their foreign-key relationships. `transactions` is the unified ledger that every
+credit/debit (deposit, loan disbursement, installment payment) writes to.
+
+![Database Schema](docs/diagrams/database_schema_diagram.svg)
+
+## Service Interactions
+
+How the consumers route to services and how services collaborate (LoanService
+credits/debits via AccountService, DepositService notifies admins, etc.).
+
+![Service Interactions](docs/diagrams/service_interaction_diagram.svg)
+
+## Diagrams
+
+| Diagram | Description |
+| --- | --- |
+| [Database Schema](docs/diagrams/database_schema_diagram.svg) | ER diagram of all 14 tables and their relationships |
+| [Service Interactions](docs/diagrams/service_interaction_diagram.svg) | Service layer collaboration and the RPC/permission patterns |
 
 ## Project Structure
 
@@ -149,6 +163,11 @@ core/
 
 migrations/
 └── versions/       # Alembic schema versions
+
+docs/
+└── diagrams/
+    ├── database_schema_diagram.svg
+    └── service_interaction_diagram.svg
 
 main.py            # Optional: FastAPI app (if REST API needed)
 ```
@@ -264,7 +283,7 @@ Transaction(
 ### Bank Info
 - **UserBankInfo** — card number, IBAN per user
 
-See [`docs/MODELS.md`](docs/MODELS.md) for full schema with relationships.
+See the [Database Schema diagram](docs/diagrams/database_schema_diagram.svg) for the full schema with relationships.
 
 ## Migrations
 

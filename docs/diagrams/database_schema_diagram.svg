@@ -1,0 +1,227 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1460" height="1200" viewBox="0 0 1460 1200" font-family="Segoe UI, Arial, sans-serif">
+  <rect width="1460" height="1200" fill="#f8f9fa"/>
+
+  <defs>
+    <marker id="fk" markerWidth="11" markerHeight="11" refX="8" refY="5" orient="auto">
+      <polygon points="0 0, 10 5, 0 10" fill="#607d8b"/>
+    </marker>
+  </defs>
+
+  <text x="730" y="42" font-size="26" font-weight="bold" text-anchor="middle" fill="#1a1a1a">Kaargoosha — Database Schema (ER Diagram)</text>
+  <text x="730" y="68" font-size="13" text-anchor="middle" fill="#607d8b">14 tables across user_management, account and loan domains</text>
+
+  <!-- ============ users (hub) ============ -->
+  <rect x="40" y="100" width="250" height="152" rx="7" fill="#ffffff" stroke="#1565c0" stroke-width="2"/>
+  <rect x="40" y="100" width="250" height="26" rx="7" fill="#1565c0"/>
+  <rect x="40" y="118" width="250" height="8" fill="#1565c0"/>
+  <text x="165" y="118" font-size="13" font-weight="bold" text-anchor="middle" fill="#ffffff">users</text>
+  <text x="52" y="143" font-size="11" fill="#222">id  (PK)</text>
+  <text x="52" y="161" font-size="11" fill="#222">phone_number  varchar(15)  (UQ)</text>
+  <text x="52" y="179" font-size="11" fill="#222">is_verify  bool</text>
+  <text x="52" y="197" font-size="11" fill="#222">first_name  varchar(50)</text>
+  <text x="52" y="215" font-size="11" fill="#222">last_name  varchar(50)</text>
+  <text x="52" y="233" font-size="11" fill="#222">create_date  datetime</text>
+
+  <!-- ============ user_bank_info ============ -->
+  <rect x="40" y="290" width="250" height="134" rx="7" fill="#ffffff" stroke="#c2185b" stroke-width="2"/>
+  <rect x="40" y="290" width="250" height="26" rx="7" fill="#c2185b"/>
+  <rect x="40" y="308" width="250" height="8" fill="#c2185b"/>
+  <text x="165" y="308" font-size="13" font-weight="bold" text-anchor="middle" fill="#ffffff">user_bank_info</text>
+  <text x="52" y="333" font-size="11" fill="#222">id  (PK)</text>
+  <text x="52" y="351" font-size="11" fill="#222">user_id  (FK -> users, UQ)</text>
+  <text x="52" y="369" font-size="11" fill="#222">card_number  varchar(16)</text>
+  <text x="52" y="387" font-size="11" fill="#222">account_number  varchar(26)</text>
+  <text x="52" y="405" font-size="11" fill="#222">iban_number  varchar(34)</text>
+
+  <!-- ============ user_social_media_id ============ -->
+  <rect x="40" y="460" width="250" height="134" rx="7" fill="#ffffff" stroke="#1565c0" stroke-width="2"/>
+  <rect x="40" y="460" width="250" height="26" rx="7" fill="#1565c0"/>
+  <rect x="40" y="478" width="250" height="8" fill="#1565c0"/>
+  <text x="165" y="478" font-size="13" font-weight="bold" text-anchor="middle" fill="#ffffff">user_social_media_id</text>
+  <text x="52" y="503" font-size="11" fill="#222">id  (PK)</text>
+  <text x="52" y="521" font-size="11" fill="#222">user_id  (FK -> users)</text>
+  <text x="52" y="539" font-size="11" fill="#222">username  varchar(100)</text>
+  <text x="52" y="557" font-size="11" fill="#222">social_media  varchar(50)</text>
+  <text x="52" y="575" font-size="11" fill="#222">chat_id  int   UQ(username, sm)</text>
+
+  <!-- ============ roles ============ -->
+  <rect x="40" y="630" width="250" height="62" rx="7" fill="#ffffff" stroke="#1565c0" stroke-width="2"/>
+  <rect x="40" y="630" width="250" height="26" rx="7" fill="#1565c0"/>
+  <rect x="40" y="648" width="250" height="8" fill="#1565c0"/>
+  <text x="165" y="648" font-size="13" font-weight="bold" text-anchor="middle" fill="#ffffff">roles</text>
+  <text x="52" y="673" font-size="11" fill="#222">id  (PK)</text>
+  <text x="52" y="688" font-size="11" fill="#222">name  varchar(30)  (UQ)</text>
+
+  <!-- ============ role_permission ============ -->
+  <rect x="40" y="730" width="250" height="98" rx="7" fill="#ffffff" stroke="#1565c0" stroke-width="2"/>
+  <rect x="40" y="730" width="250" height="26" rx="7" fill="#1565c0"/>
+  <rect x="40" y="748" width="250" height="8" fill="#1565c0"/>
+  <text x="165" y="748" font-size="13" font-weight="bold" text-anchor="middle" fill="#ffffff">role_permission</text>
+  <text x="52" y="773" font-size="11" fill="#222">id  (PK)</text>
+  <text x="52" y="791" font-size="11" fill="#222">role_id  (FK -> roles)</text>
+  <text x="52" y="809" font-size="11" fill="#222">codename  varchar(100)</text>
+  <text x="52" y="824" font-size="10" fill="#666">UQ(role_id, codename)</text>
+
+  <!-- ============ user_role ============ -->
+  <rect x="40" y="866" width="250" height="98" rx="7" fill="#ffffff" stroke="#e65100" stroke-width="2"/>
+  <rect x="40" y="866" width="250" height="26" rx="7" fill="#e65100"/>
+  <rect x="40" y="884" width="250" height="8" fill="#e65100"/>
+  <text x="165" y="884" font-size="13" font-weight="bold" text-anchor="middle" fill="#ffffff">user_role</text>
+  <text x="52" y="909" font-size="11" fill="#222">id  (PK)</text>
+  <text x="52" y="927" font-size="11" fill="#222">user_id  (FK -> users)</text>
+  <text x="52" y="945" font-size="11" fill="#222">role_id  (FK -> roles)</text>
+  <text x="52" y="960" font-size="10" fill="#666">UQ(user_id, role_id)</text>
+
+  <!-- ============ accounts ============ -->
+  <rect x="360" y="100" width="270" height="98" rx="7" fill="#ffffff" stroke="#2e7d32" stroke-width="2"/>
+  <rect x="360" y="100" width="270" height="26" rx="7" fill="#2e7d32"/>
+  <rect x="360" y="118" width="270" height="8" fill="#2e7d32"/>
+  <text x="495" y="118" font-size="13" font-weight="bold" text-anchor="middle" fill="#ffffff">accounts</text>
+  <text x="372" y="143" font-size="11" fill="#222">id  (PK)</text>
+  <text x="372" y="161" font-size="11" fill="#222">user_id  (FK -> users, UQ)</text>
+  <text x="372" y="179" font-size="11" fill="#222">balance  numeric(15,2)</text>
+  <text x="372" y="194" font-size="10" fill="#666">updated_at  datetime</text>
+
+  <!-- ============ transactions ============ -->
+  <rect x="360" y="235" width="270" height="170" rx="7" fill="#ffffff" stroke="#e65100" stroke-width="2"/>
+  <rect x="360" y="235" width="270" height="26" rx="7" fill="#e65100"/>
+  <rect x="360" y="253" width="270" height="8" fill="#e65100"/>
+  <text x="495" y="253" font-size="13" font-weight="bold" text-anchor="middle" fill="#ffffff">transactions  (unified ledger)</text>
+  <text x="372" y="278" font-size="11" fill="#222">id  (PK)</text>
+  <text x="372" y="296" font-size="11" fill="#222">user_id  (FK -> users)</text>
+  <text x="372" y="314" font-size="11" fill="#222">amount  int</text>
+  <text x="372" y="332" font-size="11" fill="#222">direction  credit | debit</text>
+  <text x="372" y="350" font-size="11" fill="#222">type  deposit | loan | instlmt</text>
+  <text x="372" y="368" font-size="11" fill="#222">reference_type  varchar(50)</text>
+  <text x="372" y="386" font-size="11" fill="#222">reference_id  int</text>
+  <text x="372" y="401" font-size="10" fill="#666">created_at  datetime</text>
+
+  <!-- ============ account_settings ============ -->
+  <rect x="360" y="440" width="270" height="62" rx="7" fill="#ffffff" stroke="#c2185b" stroke-width="2"/>
+  <rect x="360" y="440" width="270" height="26" rx="7" fill="#c2185b"/>
+  <rect x="360" y="458" width="270" height="8" fill="#c2185b"/>
+  <text x="495" y="458" font-size="13" font-weight="bold" text-anchor="middle" fill="#ffffff">account_settings</text>
+  <text x="372" y="483" font-size="11" fill="#222">id  (PK)</text>
+  <text x="372" y="498" font-size="11" fill="#222">loan_balance_threshold  int</text>
+
+  <!-- ============ fund_pool ============ -->
+  <rect x="360" y="540" width="270" height="80" rx="7" fill="#ffffff" stroke="#7b1fa2" stroke-width="2"/>
+  <rect x="360" y="540" width="270" height="26" rx="7" fill="#7b1fa2"/>
+  <rect x="360" y="558" width="270" height="8" fill="#7b1fa2"/>
+  <text x="495" y="558" font-size="13" font-weight="bold" text-anchor="middle" fill="#ffffff">fund_pool</text>
+  <text x="372" y="583" font-size="11" fill="#222">id  (PK)</text>
+  <text x="372" y="601" font-size="11" fill="#222">balance  int</text>
+  <text x="372" y="616" font-size="10" fill="#666">updated_at  datetime</text>
+
+  <!-- ============ deposit_requests ============ -->
+  <rect x="700" y="100" width="290" height="224" rx="7" fill="#ffffff" stroke="#e65100" stroke-width="2"/>
+  <rect x="700" y="100" width="290" height="26" rx="7" fill="#e65100"/>
+  <rect x="700" y="118" width="290" height="8" fill="#e65100"/>
+  <text x="845" y="118" font-size="13" font-weight="bold" text-anchor="middle" fill="#ffffff">deposit_requests</text>
+  <text x="712" y="143" font-size="11" fill="#222">id  (PK)</text>
+  <text x="712" y="161" font-size="11" fill="#222">user_id  (FK -> users)</text>
+  <text x="712" y="179" font-size="11" fill="#222">amount  int</text>
+  <text x="712" y="197" font-size="11" fill="#222">proof_type  varchar(10)</text>
+  <text x="712" y="215" font-size="11" fill="#222">proof_content  varchar(500)</text>
+  <text x="712" y="233" font-size="11" fill="#222">status  pending | approved | rejected</text>
+  <text x="712" y="251" font-size="11" fill="#222">approved_by  (FK -> users)</text>
+  <text x="712" y="269" font-size="11" fill="#222">approved_at  datetime</text>
+  <text x="712" y="287" font-size="11" fill="#222">rejection_reason  varchar(500)</text>
+  <text x="712" y="305" font-size="10" fill="#666">created_at  datetime</text>
+
+  <!-- ============ loans ============ -->
+  <rect x="700" y="360" width="290" height="242" rx="7" fill="#ffffff" stroke="#7b1fa2" stroke-width="2"/>
+  <rect x="700" y="360" width="290" height="26" rx="7" fill="#7b1fa2"/>
+  <rect x="700" y="378" width="290" height="8" fill="#7b1fa2"/>
+  <text x="845" y="378" font-size="13" font-weight="bold" text-anchor="middle" fill="#ffffff">loans</text>
+  <text x="712" y="403" font-size="11" fill="#222">id  (PK)</text>
+  <text x="712" y="421" font-size="11" fill="#222">user_id  (FK -> users)</text>
+  <text x="712" y="439" font-size="11" fill="#222">amount  int</text>
+  <text x="712" y="457" font-size="11" fill="#222">duration_months  int</text>
+  <text x="712" y="475" font-size="11" fill="#222">monthly_amount  int</text>
+  <text x="712" y="493" font-size="11" fill="#222">member_chat_id  int</text>
+  <text x="712" y="511" font-size="11" fill="#222">status  pending | approved | rejected</text>
+  <text x="712" y="529" font-size="11" fill="#222">approved_by  (FK -> users)</text>
+  <text x="712" y="547" font-size="11" fill="#222">approved_at  datetime</text>
+  <text x="712" y="565" font-size="11" fill="#222">rejection_reason  varchar(500)</text>
+  <text x="712" y="583" font-size="10" fill="#666">created_at  datetime</text>
+
+  <!-- ============ installments ============ -->
+  <rect x="1080" y="100" width="320" height="170" rx="7" fill="#ffffff" stroke="#7b1fa2" stroke-width="2"/>
+  <rect x="1080" y="100" width="320" height="26" rx="7" fill="#7b1fa2"/>
+  <rect x="1080" y="118" width="320" height="8" fill="#7b1fa2"/>
+  <text x="1240" y="118" font-size="13" font-weight="bold" text-anchor="middle" fill="#ffffff">installments</text>
+  <text x="1092" y="143" font-size="11" fill="#222">id  (PK)</text>
+  <text x="1092" y="161" font-size="11" fill="#222">loan_id  (FK -> loans)</text>
+  <text x="1092" y="179" font-size="11" fill="#222">amount  int</text>
+  <text x="1092" y="197" font-size="11" fill="#222">due_date  date</text>
+  <text x="1092" y="215" font-size="11" fill="#222">status  pending | paid</text>
+  <text x="1092" y="233" font-size="11" fill="#222">paid_at  datetime</text>
+  <text x="1092" y="251" font-size="10" fill="#666">created_at  datetime</text>
+
+  <!-- ============ installment_payment_requests ============ -->
+  <rect x="1080" y="310" width="320" height="224" rx="7" fill="#ffffff" stroke="#7b1fa2" stroke-width="2"/>
+  <rect x="1080" y="310" width="320" height="26" rx="7" fill="#7b1fa2"/>
+  <rect x="1080" y="328" width="320" height="8" fill="#7b1fa2"/>
+  <text x="1240" y="328" font-size="13" font-weight="bold" text-anchor="middle" fill="#ffffff">installment_payment_requests</text>
+  <text x="1092" y="353" font-size="11" fill="#222">id  (PK)</text>
+  <text x="1092" y="371" font-size="11" fill="#222">user_id  (FK -> users)</text>
+  <text x="1092" y="389" font-size="11" fill="#222">installment_id  (FK -> installments)</text>
+  <text x="1092" y="407" font-size="11" fill="#222">proof_type  varchar(10)</text>
+  <text x="1092" y="425" font-size="11" fill="#222">proof_content  varchar(500)</text>
+  <text x="1092" y="443" font-size="11" fill="#222">status  pending | approved | rejected</text>
+  <text x="1092" y="461" font-size="11" fill="#222">approved_by  (FK -> users)</text>
+  <text x="1092" y="479" font-size="11" fill="#222">approved_at  datetime</text>
+  <text x="1092" y="497" font-size="11" fill="#222">rejection_reason  varchar(500)</text>
+  <text x="1092" y="515" font-size="10" fill="#666">created_at  datetime</text>
+
+  <!-- ============ relationships ============ -->
+  <!-- accounts -> users -->
+  <path d="M 360 149 C 320 149, 320 170, 290 170" fill="none" stroke="#90a4ae" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#fk)"/>
+  <text x="322" y="150" font-size="9" fill="#546e7a" text-anchor="middle">1:1</text>
+  <!-- transactions -> users -->
+  <path d="M 360 300 C 320 300, 320 200, 290 200" fill="none" stroke="#90a4ae" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#fk)"/>
+  <text x="320" y="255" font-size="9" fill="#546e7a" text-anchor="middle">N:1</text>
+  <!-- deposit_requests -> users -->
+  <path d="M 700 175 C 500 175, 360 210, 290 215" fill="none" stroke="#90a4ae" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#fk)"/>
+  <text x="500" y="170" font-size="9" fill="#546e7a" text-anchor="middle">N:1 (user + approver)</text>
+  <!-- loans -> users -->
+  <path d="M 700 420 C 470 420, 330 240, 290 230" fill="none" stroke="#90a4ae" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#fk)"/>
+  <text x="500" y="430" font-size="9" fill="#546e7a" text-anchor="middle">N:1 (user + approver)</text>
+  <!-- installments -> loans -->
+  <path d="M 1080 161 C 1030 161, 1030 400, 990 400" fill="none" stroke="#90a4ae" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#fk)"/>
+  <text x="1040" y="280" font-size="9" fill="#546e7a" text-anchor="middle">N:1</text>
+  <!-- ipr -> installments -->
+  <path d="M 1240 310 C 1240 290, 1240 280, 1240 270" fill="none" stroke="#90a4ae" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#fk)"/>
+  <text x="1270" y="292" font-size="9" fill="#546e7a" text-anchor="middle">N:1</text>
+  <!-- user_bank_info -> users -->
+  <path d="M 165 290 L 165 252" fill="none" stroke="#90a4ae" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#fk)"/>
+  <text x="195" y="275" font-size="9" fill="#546e7a" text-anchor="middle">1:1</text>
+  <!-- user_role -> roles -->
+  <path d="M 165 866 C 130 866, 130 700, 130 692" fill="none" stroke="#90a4ae" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#fk)"/>
+  <text x="108" y="790" font-size="9" fill="#546e7a" text-anchor="middle">N:1</text>
+  <!-- role_permission -> roles -->
+  <path d="M 250 730 L 250 692" fill="none" stroke="#90a4ae" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#fk)"/>
+  <text x="276" y="715" font-size="9" fill="#546e7a" text-anchor="middle">N:1</text>
+
+  <!-- ============ legend ============ -->
+  <rect x="700" y="640" width="700" height="290" rx="8" fill="#f0f3f5" stroke="#cfd8dc" stroke-width="1"/>
+  <text x="720" y="670" font-size="15" font-weight="bold" fill="#37474f">Legend</text>
+
+  <rect x="720" y="685" width="20" height="14" rx="3" fill="#1565c0"/>
+  <text x="750" y="697" font-size="11" fill="#333">user_management domain</text>
+  <rect x="720" y="708" width="20" height="14" rx="3" fill="#2e7d32"/>
+  <text x="750" y="720" font-size="11" fill="#333">account / wallet</text>
+  <rect x="720" y="731" width="20" height="14" rx="3" fill="#e65100"/>
+  <text x="750" y="743" font-size="11" fill="#333">ledger and proof tables (transactions, deposits, user_role)</text>
+  <rect x="720" y="754" width="20" height="14" rx="3" fill="#7b1fa2"/>
+  <text x="750" y="766" font-size="11" fill="#333">loan domain</text>
+  <rect x="720" y="777" width="20" height="14" rx="3" fill="#c2185b"/>
+  <text x="750" y="789" font-size="11" fill="#333">config (account_settings, user_bank_info)</text>
+
+  <text x="720" y="822" font-size="11" fill="#455a64">PK = primary key   FK = foreign key   UQ = unique constraint</text>
+  <text x="720" y="844" font-size="11" fill="#455a64">accounts.user_id and user_bank_info.user_id are UNIQUE  ->  one row per user (1:1).</text>
+  <text x="720" y="866" font-size="11" fill="#455a64">transactions is the unified ledger; (reference_type, reference_id) points to the source</text>
+  <text x="740" y="884" font-size="11" fill="#455a64">row: deposit | loan | installment.</text>
+  <text x="720" y="906" font-size="11" fill="#455a64">Dashed connectors point from the child (FK side) to the parent table.</text>
+</svg>

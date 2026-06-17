@@ -45,7 +45,8 @@
 
   <!-- InstallmentPaymentService -->
   <rect x="950" y="80" width="220" height="200" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2" rx="5"/>
-  <text x="1060" y="110" font-size="13" font-weight="bold" text-anchor="middle" fill="#4a148c">InstallmentPayment<br/>Service</text>
+  <text x="1060" y="106" font-size="13" font-weight="bold" text-anchor="middle" fill="#4a148c">InstallmentPayment</text>
+  <text x="1060" y="122" font-size="13" font-weight="bold" text-anchor="middle" fill="#4a148c">Service</text>
   <line x1="950" y1="130" x2="1170" y2="130" stroke="#7b1fa2" stroke-width="1"/>
   <text x="960" y="155" font-size="9">✓ get_pending()</text>
   <text x="960" y="172" font-size="9">✓ create()</text>
