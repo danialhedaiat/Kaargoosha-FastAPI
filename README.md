@@ -119,12 +119,10 @@ their foreign-key relationships. `transactions` is the unified ledger that every
 credit/debit (deposit, loan disbursement, installment payment) writes to.
 
 <p align="center">
-  <a href="docs/diagrams/database_schema_diagram.svg" target="_blank" title="Click to open full size, then zoom in your browser">
-    <img src="docs/diagrams/database_schema_diagram.svg" alt="Database Schema" width="100%">
-  </a>
+  <img src="docs/diagrams/database_schema_diagram.svg" alt="Database Schema" width="100%">
 </p>
 
-> 💡 Click any diagram to open it full size in a new tab, then use your browser zoom to inspect details.
+> 💡 Click any diagram to open it in a zoomable popup (GitHub's built-in image viewer). Use the **+ / −** controls or scroll to zoom in.
 
 ## Service Interactions
 
@@ -132,9 +130,7 @@ How the consumers route to services and how services collaborate (LoanService
 credits/debits via AccountService, DepositService notifies admins, etc.).
 
 <p align="center">
-  <a href="docs/diagrams/service_interaction_diagram.svg" target="_blank" title="Click to open full size, then zoom in your browser">
-    <img src="docs/diagrams/service_interaction_diagram.svg" alt="Service Interactions" width="100%">
-  </a>
+  <img src="docs/diagrams/service_interaction_diagram.svg" alt="Service Interactions" width="100%">
 </p>
 
 ## Diagrams
