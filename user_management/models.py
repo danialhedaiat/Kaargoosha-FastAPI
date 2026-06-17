@@ -81,3 +81,16 @@ class UserRole(Base):
 
     user = relationship("UserModel", back_populates="roles")
     role = relationship("Role", back_populates="users")
+
+
+class UserBankInfo(Base):
+    __tablename__ = "user_bank_info"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), unique=True, nullable=False)
+    card_number: Mapped[str] = mapped_column(String(16), nullable=True)
+    account_number: Mapped[str] = mapped_column(String(26), nullable=True)
+    iban_number: Mapped[str] = mapped_column(String(34), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+
+    user = relationship("UserModel", backref="bank_info")
