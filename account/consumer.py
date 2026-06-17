@@ -44,6 +44,8 @@ class AccountConsumer:
 
             if method.routing_key == 'account.get_balance':
                 result = service.get_balance(data)
+            elif method.routing_key == 'account.set_threshold':
+                result = service.set_threshold(data)
 
             self.response(ch, method, properties, result)
 

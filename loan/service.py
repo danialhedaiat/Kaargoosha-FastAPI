@@ -84,6 +84,19 @@ class LoanService:
             if active_loan:
                 return json.dumps({"error": "User already has an active or pending loan"})
 
+            from account.service import AccountService
+            from account.models import Account
+            account_service = AccountService(db=self.db)
+            threshold = account_service.get_loan_threshold()
+            account = self.db.query(Account).filter_by(user_id=user_id).first()
+            balance = int(account.balance) if account else 0
+            if balance < threshold:
+                return json.dumps({
+                    "error": "insufficient_balance",
+                    "balance": balance,
+                    "required": threshold,
+                })
+
             loan = Loan(
                 user_id=user_id,
                 duration_months=duration_months,

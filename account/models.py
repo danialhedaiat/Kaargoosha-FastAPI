@@ -66,3 +66,10 @@ class DepositRequest(Base):
 
     user = relationship("UserModel", foreign_keys=[user_id])
     approver = relationship("UserModel", foreign_keys=[approved_by])
+
+
+class AccountSetting(Base):
+    __tablename__ = "account_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    loan_balance_threshold: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

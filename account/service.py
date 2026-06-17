@@ -4,7 +4,7 @@ import traceback
 
 from core.database import SessionLocal, get_db
 from core.settings import logger
-from account.models import Account, DepositRequest, DepositStatus, Transaction, TransactionDirection, TransactionType
+from account.models import Account, AccountSetting, DepositRequest, DepositStatus, Transaction, TransactionDirection, TransactionType
 from account.schema import AccountResponseSchema
 from user_management.models import UserBankInfo
 from user_management.permissions import permission, Permissions
@@ -28,6 +28,26 @@ class AccountService:
         if not account:
             raise ValueError(f"Account not found for user_id={user_id}")
         account.balance = int(account.balance) - amount
+
+    def get_loan_threshold(self) -> int:
+        setting = self.db.query(AccountSetting).first()
+        return setting.loan_balance_threshold if setting else 0
+
+    def set_threshold(self, data: dict):
+        try:
+            threshold = int(data["threshold"])
+            setting = self.db.query(AccountSetting).first()
+            if setting:
+                setting.loan_balance_threshold = threshold
+            else:
+                self.db.add(AccountSetting(loan_balance_threshold=threshold))
+            self.db.commit()
+            return json.dumps({"threshold": threshold})
+        except Exception as e:
+            self.db.rollback()
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": str(e)})
 
     def get_balance(self, data: dict):
         account = self.db.query(Account).filter_by(user_id=data["user_id"]).first()
