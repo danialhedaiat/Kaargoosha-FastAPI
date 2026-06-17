@@ -5,7 +5,7 @@ import traceback
 
 from core.database import get_db, SessionLocal
 from core.settings import logger, settings
-from loan.models import Loan, LoanStatus, FundPool, Installment, InstallmentStatus
+from loan.models import Loan, LoanStatus, FundPool, Installment, InstallmentStatus, InstallmentPaymentRequest, InstallmentPaymentStatus
 from loan.schema import LoanResponseSchema
 from user_management.permissions import permission, Permissions
 
@@ -279,6 +279,178 @@ class LoanService:
             ])
 
         except Exception as e:
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": str(e)})
+
+
+class InstallmentPaymentService:
+
+    def __init__(self):
+        self.db: SessionLocal = get_db()
+
+    def get_pending(self, data: dict):
+        try:
+            user_id = data["user_id"]
+            installments = (
+                self.db.query(Installment)
+                .join(Loan, Installment.loan_id == Loan.id)
+                .filter(Loan.user_id == user_id, Installment.status == InstallmentStatus.pending)
+                .order_by(Installment.due_date)
+                .all()
+            )
+            return json.dumps([
+                {
+                    "id": i.id,
+                    "amount": i.amount,
+                    "due_date": str(i.due_date),
+                    "loan_id": i.loan_id,
+                }
+                for i in installments
+            ])
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": str(e)})
+
+    def create(self, data: dict):
+        try:
+            user_id = data["user_id"]
+            installment_id = data["installment_id"]
+            proof_type = data["proof_type"]
+            proof_content = data["proof_content"]
+
+            installment = self.db.query(Installment).filter_by(id=installment_id).first()
+            if not installment:
+                return json.dumps({"error": "Installment not found"})
+            if installment.loan.user_id != user_id:
+                return json.dumps({"error": "Installment does not belong to user"})
+            if installment.status != InstallmentStatus.pending:
+                return json.dumps({"error": f"Installment is already {installment.status.value}"})
+
+            request = InstallmentPaymentRequest(
+                user_id=user_id,
+                installment_id=installment_id,
+                proof_type=proof_type,
+                proof_content=proof_content,
+                status=InstallmentPaymentStatus.pending,
+            )
+            self.db.add(request)
+            self.db.commit()
+            self.db.refresh(request)
+
+            self._notify_admins(request, installment)
+
+            return json.dumps({"id": request.id, "status": request.status.value})
+
+        except Exception as e:
+            self.db.rollback()
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": str(e)})
+
+    def _notify_admins(self, request, installment):
+        try:
+            from user_management.models import UserModel, UserSocialMediaID, UserRole, RolePermission
+            from core.notification_publisher import NotificationPublisher
+
+            rows = (
+                self.db.query(UserSocialMediaID.chat_id, UserSocialMediaID.social_media)
+                .join(UserModel, UserSocialMediaID.user_id == UserModel.id)
+                .join(UserRole, UserModel.id == UserRole.user_id)
+                .join(RolePermission, UserRole.role_id == RolePermission.role_id)
+                .filter(
+                    RolePermission.codename == Permissions.LOAN_APPROVE,
+                    UserSocialMediaID.chat_id.isnot(None),
+                )
+                .distinct()
+                .all()
+            )
+
+            recipients = [{"chat_id": row[0], "social_media": row[1]} for row in rows]
+            if not recipients:
+                return
+
+            user = self.db.query(UserModel).filter_by(id=request.user_id).first()
+            NotificationPublisher().notify_installment_payment_request(
+                request_id=request.id,
+                user_id=request.user_id,
+                first_name=user.first_name if user else "",
+                last_name=user.last_name if user else "",
+                installment_id=installment.id,
+                amount=installment.amount,
+                due_date=str(installment.due_date),
+                proof_type=request.proof_type,
+                proof_content=request.proof_content,
+                recipients=recipients,
+            )
+        except Exception:
+            logger.error(traceback.format_exc())
+
+    @permission(Permissions.LOAN_APPROVE)
+    def approve(self, data: dict):
+        try:
+            installment_payment_id = data["installment_payment_id"]
+
+            request = self.db.query(InstallmentPaymentRequest).filter_by(id=installment_payment_id).first()
+            if not request:
+                return json.dumps({"error": "Installment payment request not found"})
+            if request.status != InstallmentPaymentStatus.pending:
+                return json.dumps({"error": f"Request is already {request.status.value}"})
+
+            installment = self.db.query(Installment).filter_by(id=request.installment_id).first()
+            if installment.status != InstallmentStatus.pending:
+                return json.dumps({"error": f"Installment is already {installment.status.value}"})
+
+            installment.status = InstallmentStatus.paid
+            installment.paid_at = datetime.datetime.now()
+
+            from account.service import AccountService
+            AccountService(db=self.db).debit(request.user_id, installment.amount)
+
+            from account.models import Transaction, TransactionType, TransactionDirection
+            self.db.add(Transaction(
+                user_id=request.user_id,
+                amount=installment.amount,
+                direction=TransactionDirection.debit,
+                type=TransactionType.installment_payment,
+                reference_type="installment",
+                reference_id=installment.id,
+            ))
+
+            request.status = InstallmentPaymentStatus.approved
+            request.approved_by = data["requested_by"]
+            request.approved_at = datetime.datetime.now()
+
+            self.db.commit()
+            return json.dumps({"id": request.id, "status": request.status.value})
+
+        except Exception as e:
+            self.db.rollback()
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": str(e)})
+
+    @permission(Permissions.LOAN_APPROVE)
+    def reject(self, data: dict):
+        try:
+            installment_payment_id = data["installment_payment_id"]
+            rejection_reason = data.get("rejection_reason")
+
+            request = self.db.query(InstallmentPaymentRequest).filter_by(id=installment_payment_id).first()
+            if not request:
+                return json.dumps({"error": "Installment payment request not found"})
+            if request.status != InstallmentPaymentStatus.pending:
+                return json.dumps({"error": f"Request is already {request.status.value}"})
+
+            request.status = InstallmentPaymentStatus.rejected
+            request.rejection_reason = rejection_reason
+
+            self.db.commit()
+            return json.dumps({"id": request.id, "status": request.status.value})
+
+        except Exception as e:
+            self.db.rollback()
             logger.error(traceback.format_exc())
             logger.error(e)
             return json.dumps({"error": str(e)})

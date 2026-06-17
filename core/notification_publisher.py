@@ -66,6 +66,29 @@ class NotificationPublisher:
         except Exception:
             logger.error(traceback.format_exc())
 
+    def notify_installment_payment_request(self, request_id: int, user_id: int, first_name: str, last_name: str, installment_id: int, amount: int, due_date: str, proof_type: str, proof_content: str, recipients: list):
+        try:
+            message = {
+                "request_id": request_id,
+                "user_id": user_id,
+                "first_name": first_name,
+                "last_name": last_name,
+                "installment_id": installment_id,
+                "amount": amount,
+                "due_date": due_date,
+                "proof_type": proof_type,
+                "proof_content": proof_content,
+                "recipients": recipients,
+            }
+            self.channel.basic_publish(
+                exchange=self.EXCHANGE,
+                routing_key="notify.installment_payment_request",
+                body=msgpack.packb(message),
+            )
+            logger.info(f"Sent installment payment request notification for request_id={request_id} to {len(recipients)} recipient(s)")
+        except Exception:
+            logger.error(traceback.format_exc())
+
     def notify_deposit_request(self, deposit_id: int, user_id: int, first_name: str, last_name: str, amount: int, proof_type: str, proof_content: str, recipients: list):
         try:
             message = {

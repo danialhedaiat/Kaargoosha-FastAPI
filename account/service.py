@@ -23,6 +23,12 @@ class AccountService:
             self.db.flush()
         account.balance = int(account.balance) + amount
 
+    def debit(self, user_id: int, amount: int):
+        account = self.db.query(Account).filter_by(user_id=user_id).first()
+        if not account:
+            raise ValueError(f"Account not found for user_id={user_id}")
+        account.balance = int(account.balance) - amount
+
     def get_balance(self, data: dict):
         account = self.db.query(Account).filter_by(user_id=data["user_id"]).first()
         if not account:
