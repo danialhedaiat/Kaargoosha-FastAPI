@@ -257,6 +257,7 @@ class LoanService:
                     "user_id": loan.user_id,
                     "first_name": loan.user.first_name,
                     "last_name": loan.user.last_name,
+                    "phone_number": loan.user.phone_number,
                     "member_chat_id": loan.member_chat_id,
                     "duration_months": loan.duration_months,
                     "amount": loan.amount,
