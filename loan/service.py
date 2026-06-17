@@ -171,6 +171,16 @@ class LoanService:
             from account.service import AccountService
             AccountService(db=self.db).credit(loan.user_id, amount)
 
+            from account.models import Transaction, TransactionType, TransactionDirection
+            self.db.add(Transaction(
+                user_id=loan.user_id,
+                amount=amount,
+                direction=TransactionDirection.credit,
+                type=TransactionType.loan_disbursement,
+                reference_type="loan",
+                reference_id=loan.id,
+            ))
+
             InstallmentService(db=self.db).generate(loan.id, monthly_amount, loan.duration_months)
 
             self.db.commit()
