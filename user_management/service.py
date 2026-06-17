@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 from core.database import SessionLocal, get_db
 from core.settings import logger, settings
+from account.models import Account
 from user_management.models import UserModel, UserSocialMediaID, Role, UserRole, RolePermission
 from user_management.permissions import Permissions, permission
 from user_management.schema import UserCompleteSchema, RoleResponseSchema, AssignedRoleResponseSchema, \
@@ -40,6 +41,8 @@ class UserService:
                 self.db.add(user)
 
                 self.db.flush()
+
+                self.db.add(Account(user_id=user.id, balance=0))
 
                 exists = self.db.query(UserSocialMediaID).filter_by(
                     username=data["username"],
