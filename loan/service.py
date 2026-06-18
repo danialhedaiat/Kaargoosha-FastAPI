@@ -359,6 +359,8 @@ class InstallmentPaymentService:
                 direction=TransactionDirection.debit,
                 type=TransactionType.installment_payment,
                 status=TransactionStatus.pending,
+                proof_type=proof_type,
+                proof_content=proof_content,
                 reference_type="installment_payment_request",
                 reference_id=request.id,
             ))

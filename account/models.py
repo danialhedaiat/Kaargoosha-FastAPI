@@ -44,6 +44,8 @@ class Transaction(Base):
     direction: Mapped[TransactionDirection] = mapped_column(Enum(TransactionDirection), nullable=False)
     type: Mapped[TransactionType] = mapped_column(Enum(TransactionType), nullable=False)
     status: Mapped[TransactionStatus] = mapped_column(Enum(TransactionStatus), nullable=False, default=TransactionStatus.pending)
+    proof_type: Mapped[str] = mapped_column(String(10), nullable=True)
+    proof_content: Mapped[str] = mapped_column(String(500), nullable=True)
     reference_type: Mapped[str] = mapped_column(String(50), nullable=False)
     reference_id: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.now)

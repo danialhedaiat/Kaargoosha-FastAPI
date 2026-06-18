@@ -130,6 +130,8 @@ class DepositService:
                 direction=TransactionDirection.credit,
                 type=TransactionType.deposit,
                 status=TransactionStatus.pending,
+                proof_type=proof_type,
+                proof_content=proof_content,
                 reference_type="deposit_request",
                 reference_id=deposit.id,
             ))
@@ -289,6 +291,8 @@ class TransactionService:
                     "direction": t.direction.value,
                     "type": t.type.value,
                     "status": t.status.value,
+                    "proof_type": t.proof_type,
+                    "proof_content": t.proof_content,
                     "reference_type": t.reference_type,
                     "reference_id": t.reference_id,
                     "created_at": str(t.created_at),
