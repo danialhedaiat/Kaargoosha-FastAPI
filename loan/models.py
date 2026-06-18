@@ -60,26 +60,3 @@ class FundPool(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
 
-class InstallmentPaymentStatus(str, enum.Enum):
-    pending = "pending"
-    approved = "approved"
-    rejected = "rejected"
-
-
-class InstallmentPaymentRequest(Base):
-    __tablename__ = "installment_payment_requests"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    installment_id: Mapped[int] = mapped_column(Integer, ForeignKey("installments.id"), nullable=False)
-    proof_type: Mapped[str] = mapped_column(String(10), nullable=False)
-    proof_content: Mapped[str] = mapped_column(String(500), nullable=False)
-    status: Mapped[InstallmentPaymentStatus] = mapped_column(Enum(InstallmentPaymentStatus), nullable=False, default=InstallmentPaymentStatus.pending)
-    approved_by: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
-    approved_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
-    rejection_reason: Mapped[str] = mapped_column(String(500), nullable=True)
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.now)
-
-    user = relationship("UserModel", foreign_keys=[user_id])
-    approver = relationship("UserModel", foreign_keys=[approved_by])
-    installment = relationship("Installment", foreign_keys=[installment_id])

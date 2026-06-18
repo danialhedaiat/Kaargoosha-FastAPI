@@ -44,30 +44,6 @@ class Transaction(Base):
     user = relationship("UserModel", foreign_keys=[user_id])
 
 
-class DepositStatus(str, enum.Enum):
-    pending = "pending"
-    approved = "approved"
-    rejected = "rejected"
-
-
-class DepositRequest(Base):
-    __tablename__ = "deposit_requests"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    amount: Mapped[int] = mapped_column(Integer, nullable=False)
-    proof_type: Mapped[str] = mapped_column(String(10), nullable=False)
-    proof_content: Mapped[str] = mapped_column(String(500), nullable=False)
-    status: Mapped[DepositStatus] = mapped_column(Enum(DepositStatus), nullable=False, default=DepositStatus.pending)
-    approved_by: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
-    approved_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
-    rejection_reason: Mapped[str] = mapped_column(String(500), nullable=True)
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.now)
-
-    user = relationship("UserModel", foreign_keys=[user_id])
-    approver = relationship("UserModel", foreign_keys=[approved_by])
-
-
 class AccountSetting(Base):
     __tablename__ = "account_settings"
 

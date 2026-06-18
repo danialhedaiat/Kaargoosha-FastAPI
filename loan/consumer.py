@@ -65,12 +65,6 @@ class LoanConsumer:
 
             if method.routing_key == 'installment_payment.get_pending':
                 result = service.get_pending(data)
-            elif method.routing_key == 'installment_payment.create':
-                result = service.create(data)
-            elif method.routing_key == 'installment_payment.approve':
-                result = service.approve(data)
-            elif method.routing_key == 'installment_payment.reject':
-                result = service.reject(data)
 
             self.response(ch, method, properties, result)
 

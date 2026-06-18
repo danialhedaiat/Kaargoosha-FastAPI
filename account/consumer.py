@@ -4,7 +4,7 @@ import msgpack
 from pika import BasicProperties
 from pika.adapters.blocking_connection import BlockingChannel
 
-from account.service import AccountService, BankInfoService, DepositService, ReceiptService
+from account.service import AccountService, BankInfoService, ReceiptService
 from core.rabbitmq_connection import RabbitMQConnection
 from core.settings import logger
 
@@ -27,11 +27,6 @@ class AccountConsumer:
         self.channel.exchange_declare(exchange='bank_info', exchange_type='topic', durable=True)
         self.channel.queue_bind(queue='bank_info_queue', exchange='bank_info', routing_key='bank_info.*')
         self.channel.basic_consume(queue='bank_info_queue', on_message_callback=self.request_bank_info)
-
-        self.channel.queue_declare(queue='deposit_queue')
-        self.channel.exchange_declare(exchange='deposit', exchange_type='topic', durable=True)
-        self.channel.queue_bind(queue='deposit_queue', exchange='deposit', routing_key='deposit.*')
-        self.channel.basic_consume(queue='deposit_queue', on_message_callback=self.request_deposit)
 
         self.channel.queue_declare(queue='receipt_queue')
         self.channel.exchange_declare(exchange='receipt', exchange_type='topic', durable=True)
@@ -68,25 +63,6 @@ class AccountConsumer:
                 result = service.save(data)
             elif method.routing_key == 'bank_info.get':
                 result = service.get(data)
-
-            self.response(ch, method, properties, result)
-
-        except Exception as e:
-            logger.error(traceback.format_exc())
-            logger.error(e)
-
-    def request_deposit(self, ch: BlockingChannel, method, properties: BasicProperties, body):
-        try:
-            data = msgpack.unpackb(body)
-            service = DepositService()
-            result = None
-
-            if method.routing_key == 'deposit.create':
-                result = service.create(data)
-            elif method.routing_key == 'deposit.approve':
-                result = service.approve(data)
-            elif method.routing_key == 'deposit.reject':
-                result = service.reject(data)
 
             self.response(ch, method, properties, result)
 
