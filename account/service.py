@@ -4,8 +4,7 @@ import traceback
 
 from core.database import SessionLocal, get_db
 from core.settings import logger
-from core.utilities import since_from_range
-from account.models import Account, AccountSetting, DepositRequest, DepositStatus, Transaction, TransactionDirection, TransactionType, TransactionStatus
+from account.models import Account, AccountSetting, DepositRequest, DepositStatus, Transaction, TransactionDirection, TransactionType
 from account.schema import AccountResponseSchema
 from user_management.models import UserBankInfo
 from user_management.permissions import permission, Permissions
@@ -122,20 +121,6 @@ class DepositService:
                 status=DepositStatus.pending,
             )
             self.db.add(deposit)
-            self.db.flush()
-
-            self.db.add(Transaction(
-                user_id=user_id,
-                amount=amount,
-                direction=TransactionDirection.credit,
-                type=TransactionType.deposit,
-                status=TransactionStatus.pending,
-                proof_type=proof_type,
-                proof_content=proof_content,
-                reference_type="deposit_request",
-                reference_id=deposit.id,
-            ))
-
             self.db.commit()
             self.db.refresh(deposit)
 
@@ -199,21 +184,14 @@ class DepositService:
 
             AccountService(db=self.db).credit(deposit.user_id, deposit.amount)
 
-            transaction = self.db.query(Transaction).filter_by(
-                reference_type="deposit_request", reference_id=deposit.id
-            ).first()
-            if transaction:
-                transaction.status = TransactionStatus.approved
-            else:
-                self.db.add(Transaction(
-                    user_id=deposit.user_id,
-                    amount=deposit.amount,
-                    direction=TransactionDirection.credit,
-                    type=TransactionType.deposit,
-                    status=TransactionStatus.approved,
-                    reference_type="deposit_request",
-                    reference_id=deposit.id,
-                ))
+            self.db.add(Transaction(
+                user_id=deposit.user_id,
+                amount=deposit.amount,
+                direction=TransactionDirection.credit,
+                type=TransactionType.deposit,
+                reference_type="deposit",
+                reference_id=deposit.id,
+            ))
 
             deposit.status = DepositStatus.approved
             deposit.approved_by = data["requested_by"]
@@ -244,63 +222,11 @@ class DepositService:
             deposit.status = DepositStatus.rejected
             deposit.rejection_reason = rejection_reason
 
-            transaction = self.db.query(Transaction).filter_by(
-                reference_type="deposit_request", reference_id=deposit.id
-            ).first()
-            if transaction:
-                transaction.status = TransactionStatus.rejected
-
             self.db.commit()
             return json.dumps({"id": deposit.id, "status": deposit.status.value})
 
         except Exception as e:
             self.db.rollback()
-            logger.error(traceback.format_exc())
-            logger.error(e)
-            return json.dumps({"error": str(e)})
-
-
-class TransactionService:
-
-    def __init__(self):
-        self.db: SessionLocal = get_db()
-
-    @permission(Permissions.TRANSACTION_READ)
-    def list(self, data: dict):
-        try:
-            tx_type = data.get("type")
-            status = data.get("status", "all")
-            since = since_from_range(data.get("range"))
-
-            query = self.db.query(Transaction)
-            if tx_type and tx_type != "all":
-                query = query.filter(Transaction.type == TransactionType(tx_type))
-            if status and status != "all":
-                query = query.filter(Transaction.status == TransactionStatus(status))
-            if since is not None:
-                query = query.filter(Transaction.created_at >= since)
-
-            rows = query.order_by(Transaction.created_at.desc()).limit(50).all()
-            return json.dumps([
-                {
-                    "id": t.id,
-                    "user_id": t.user_id,
-                    "first_name": t.user.first_name if t.user else "",
-                    "last_name": t.user.last_name if t.user else "",
-                    "amount": t.amount,
-                    "direction": t.direction.value,
-                    "type": t.type.value,
-                    "status": t.status.value,
-                    "proof_type": t.proof_type,
-                    "proof_content": t.proof_content,
-                    "reference_type": t.reference_type,
-                    "reference_id": t.reference_id,
-                    "created_at": str(t.created_at),
-                }
-                for t in rows
-            ])
-
-        except Exception as e:
             logger.error(traceback.format_exc())
             logger.error(e)
             return json.dumps({"error": str(e)})

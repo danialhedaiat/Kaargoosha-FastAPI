@@ -184,13 +184,12 @@ class LoanService:
             from account.service import AccountService
             AccountService(db=self.db).credit(loan.user_id, amount)
 
-            from account.models import Transaction, TransactionType, TransactionDirection, TransactionStatus
+            from account.models import Transaction, TransactionType, TransactionDirection
             self.db.add(Transaction(
                 user_id=loan.user_id,
                 amount=amount,
                 direction=TransactionDirection.credit,
                 type=TransactionType.loan_disbursement,
-                status=TransactionStatus.approved,
                 reference_type="loan",
                 reference_id=loan.id,
             ))
@@ -350,21 +349,6 @@ class InstallmentPaymentService:
                 status=InstallmentPaymentStatus.pending,
             )
             self.db.add(request)
-            self.db.flush()
-
-            from account.models import Transaction, TransactionType, TransactionDirection, TransactionStatus
-            self.db.add(Transaction(
-                user_id=user_id,
-                amount=installment.amount,
-                direction=TransactionDirection.debit,
-                type=TransactionType.installment_payment,
-                status=TransactionStatus.pending,
-                proof_type=proof_type,
-                proof_content=proof_content,
-                reference_type="installment_payment_request",
-                reference_id=request.id,
-            ))
-
             self.db.commit()
             self.db.refresh(request)
 
@@ -437,22 +421,15 @@ class InstallmentPaymentService:
             from account.service import AccountService
             AccountService(db=self.db).debit(request.user_id, installment.amount)
 
-            from account.models import Transaction, TransactionType, TransactionDirection, TransactionStatus
-            transaction = self.db.query(Transaction).filter_by(
-                reference_type="installment_payment_request", reference_id=request.id
-            ).first()
-            if transaction:
-                transaction.status = TransactionStatus.approved
-            else:
-                self.db.add(Transaction(
-                    user_id=request.user_id,
-                    amount=installment.amount,
-                    direction=TransactionDirection.debit,
-                    type=TransactionType.installment_payment,
-                    status=TransactionStatus.approved,
-                    reference_type="installment_payment_request",
-                    reference_id=request.id,
-                ))
+            from account.models import Transaction, TransactionType, TransactionDirection
+            self.db.add(Transaction(
+                user_id=request.user_id,
+                amount=installment.amount,
+                direction=TransactionDirection.debit,
+                type=TransactionType.installment_payment,
+                reference_type="installment",
+                reference_id=installment.id,
+            ))
 
             request.status = InstallmentPaymentStatus.approved
             request.approved_by = data["requested_by"]
@@ -481,13 +458,6 @@ class InstallmentPaymentService:
 
             request.status = InstallmentPaymentStatus.rejected
             request.rejection_reason = rejection_reason
-
-            from account.models import Transaction, TransactionStatus
-            transaction = self.db.query(Transaction).filter_by(
-                reference_type="installment_payment_request", reference_id=request.id
-            ).first()
-            if transaction:
-                transaction.status = TransactionStatus.rejected
 
             self.db.commit()
             return json.dumps({"id": request.id, "status": request.status.value})
