@@ -1,6 +1,10 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+
+from core.settings import settings
 
 
 @asynccontextmanager
@@ -19,3 +23,8 @@ app = FastAPI(
         "phone_number": "+989308222060"
     }
 )
+
+# Serve persisted receipt proofs so they are retrievable from any platform.
+# NOTE: this mount is currently unauthenticated — gate it before production.
+os.makedirs(os.path.join(settings.MEDIA_ROOT, "receipts"), exist_ok=True)
+app.mount("/media", StaticFiles(directory=settings.MEDIA_ROOT), name="media")
