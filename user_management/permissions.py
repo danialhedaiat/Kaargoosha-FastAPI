@@ -26,6 +26,12 @@ class Permissions:
     LOAN_APPROVE = "loan.approve"
     LOAN_REJECT  = "loan.reject"
 
+    # Transaction
+    TRANSACTION_CREATE = "transaction.create"
+    TRANSACTION_READ   = "transaction.read"
+    TRANSACTION_UPDATE = "transaction.update"
+    TRANSACTION_DELETE = "transaction.delete"
+
     #Permission
     PERMISSION_CREATE  = "role.create"
     PERMISSION_READ    = "role.read"
