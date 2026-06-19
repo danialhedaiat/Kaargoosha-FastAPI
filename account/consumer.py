@@ -84,6 +84,8 @@ class AccountConsumer:
                 result = service.reject(data)
             elif method.routing_key == 'receipt.list':
                 result = service.list(data)
+            elif method.routing_key == 'receipt.get_proof':
+                result = service.get_proof(data)
 
             self.response(ch, method, properties, result)
 

@@ -1,9 +1,10 @@
 import datetime
 import json
+import os
 import traceback
 
 from core.database import SessionLocal, get_db
-from core.settings import logger
+from core.settings import logger, settings
 from core.utilities import since_from_range, save_receipt_proof
 from account.models import (
     Account, AccountSetting, Transaction,
@@ -279,3 +280,29 @@ class ReceiptService:
             logger.error(traceback.format_exc())
             logger.error(e)
             return json.dumps({"error": str(e)})
+
+    @permission(Permissions.TRANSACTION_READ)
+    def get_proof(self, data: dict):
+        """Return a receipt's proof for the admin to view: raw image bytes for photo
+        proofs (read from the media dir) or the inline text. Bytes travel over RabbitMQ
+        (msgpack) so the bot can re-send the actual photo to Bale."""
+        try:
+            receipt = self.db.query(Receipt).filter_by(id=data["receipt_id"]).first()
+            if not receipt:
+                return {"error": "Receipt not found"}
+
+            if receipt.proof_type == "photo" and receipt.proof_path:
+                path = os.path.join(settings.MEDIA_ROOT, receipt.proof_path)
+                if not os.path.exists(path):
+                    return {"error": "Proof file not found"}
+                with open(path, "rb") as f:
+                    content = f.read()
+                ext = receipt.proof_path.rsplit(".", 1)[-1] if "." in receipt.proof_path else "jpg"
+                return {"proof_type": "photo", "proof_bytes": content, "ext": ext}
+
+            return {"proof_type": receipt.proof_type, "proof_text": receipt.proof_text}
+
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return {"error": str(e)}
