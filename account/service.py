@@ -281,6 +281,41 @@ class ReceiptService:
             logger.error(e)
             return json.dumps({"error": str(e)})
 
+    def list_mine(self, data: dict):
+        """Ownership-scoped receipt list for the client self-service menu.
+
+        No permission gate: returns only the caller's own receipts (the bot derives
+        user_id from the authenticated member, never from client input)."""
+        try:
+            user_id = data["user_id"]
+            rows = (
+                self.db.query(Receipt)
+                .filter(Receipt.user_id == user_id)
+                .order_by(Receipt.created_at.desc())
+                .limit(50)
+                .all()
+            )
+            return json.dumps([
+                {
+                    "id": r.id,
+                    "type": r.type.value,
+                    "amount": r.amount,
+                    "status": r.status.value,
+                    "proof_type": r.proof_type,
+                    "proof_text": r.proof_text,
+                    "reference_type": r.reference_type,
+                    "reference_id": r.reference_id,
+                    "rejection_reason": r.rejection_reason,
+                    "created_at": str(r.created_at),
+                }
+                for r in rows
+            ])
+
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": str(e)})
+
     @permission(Permissions.TRANSACTION_READ)
     def get_proof(self, data: dict):
         """Return a receipt's proof for the admin to view: raw image bytes for photo
@@ -306,3 +341,41 @@ class ReceiptService:
             logger.error(traceback.format_exc())
             logger.error(e)
             return {"error": str(e)}
+
+
+class TransactionService:
+    """Read access to the immutable ledger for the client self-service menu."""
+
+    def __init__(self):
+        self.db: SessionLocal = get_db()
+
+    def list_mine(self, data: dict):
+        """Ownership-scoped ledger list. No permission gate: returns only the
+        caller's own transactions (the bot derives user_id from the authenticated
+        member, never from client input)."""
+        try:
+            user_id = data["user_id"]
+            rows = (
+                self.db.query(Transaction)
+                .filter(Transaction.user_id == user_id)
+                .order_by(Transaction.created_at.desc())
+                .limit(50)
+                .all()
+            )
+            return json.dumps([
+                {
+                    "id": t.id,
+                    "amount": t.amount,
+                    "direction": t.direction.value,
+                    "type": t.type.value,
+                    "reference_type": t.reference_type,
+                    "reference_id": t.reference_id,
+                    "created_at": str(t.created_at),
+                }
+                for t in rows
+            ])
+
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": str(e)})

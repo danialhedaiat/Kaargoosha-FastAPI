@@ -257,6 +257,35 @@ class LoanService:
             logger.error(e)
             return json.dumps({"error": str(e)})
 
+    def get_my_loans(self, data: dict):
+        try:
+            user_id = data["user_id"]
+            loans = (
+                self.db.query(Loan)
+                .filter_by(user_id=user_id)
+                .order_by(Loan.created_at.desc())
+                .all()
+            )
+
+            return json.dumps([
+                {
+                    "id": loan.id,
+                    "amount": loan.amount,
+                    "duration_months": loan.duration_months,
+                    "monthly_amount": loan.monthly_amount,
+                    "status": loan.status.value,
+                    "approved_at": str(loan.approved_at) if loan.approved_at else None,
+                    "rejection_reason": loan.rejection_reason,
+                    "created_at": str(loan.created_at),
+                }
+                for loan in loans
+            ])
+
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": str(e)})
+
     @permission(Permissions.LOAN_READ)
     def get_loans(self, data: dict):
         try:

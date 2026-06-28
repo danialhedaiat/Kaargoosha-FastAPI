@@ -4,7 +4,7 @@ import msgpack
 from pika import BasicProperties
 from pika.adapters.blocking_connection import BlockingChannel
 
-from account.service import AccountService, BankInfoService, ReceiptService
+from account.service import AccountService, BankInfoService, ReceiptService, TransactionService
 from core.rabbitmq_connection import RabbitMQConnection
 from core.settings import logger
 
@@ -32,6 +32,11 @@ class AccountConsumer:
         self.channel.exchange_declare(exchange='receipt', exchange_type='topic', durable=True)
         self.channel.queue_bind(queue='receipt_queue', exchange='receipt', routing_key='receipt.*')
         self.channel.basic_consume(queue='receipt_queue', on_message_callback=self.request_receipt)
+
+        self.channel.queue_declare(queue='transaction_queue')
+        self.channel.exchange_declare(exchange='transaction', exchange_type='topic', durable=True)
+        self.channel.queue_bind(queue='transaction_queue', exchange='transaction', routing_key='transaction.*')
+        self.channel.basic_consume(queue='transaction_queue', on_message_callback=self.request_transaction)
 
         logger.info("Waiting for messages in account_queue. To exit press CTRL+C")
         self.channel.start_consuming()
@@ -84,8 +89,25 @@ class AccountConsumer:
                 result = service.reject(data)
             elif method.routing_key == 'receipt.list':
                 result = service.list(data)
+            elif method.routing_key == 'receipt.list_mine':
+                result = service.list_mine(data)
             elif method.routing_key == 'receipt.get_proof':
                 result = service.get_proof(data)
+
+            self.response(ch, method, properties, result)
+
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            logger.error(e)
+
+    def request_transaction(self, ch: BlockingChannel, method, properties: BasicProperties, body):
+        try:
+            data = msgpack.unpackb(body)
+            service = TransactionService()
+            result = None
+
+            if method.routing_key == 'transaction.list_mine':
+                result = service.list_mine(data)
 
             self.response(ch, method, properties, result)
 
