@@ -196,6 +196,15 @@ class ReceiptService:
                 direction = TransactionDirection.debit
                 tx_type = TransactionType.installment_payment
 
+            # Money in (deposit or installment payment) tops up the shared fund pool.
+            from loan.models import FundPool
+            fund_pool = self.db.query(FundPool).first()
+            if not fund_pool:
+                fund_pool = FundPool(balance=0)
+                self.db.add(fund_pool)
+                self.db.flush()
+            fund_pool.balance = int(fund_pool.balance) + receipt.amount
+
             self.db.add(Transaction(
                 user_id=receipt.user_id,
                 amount=receipt.amount,
