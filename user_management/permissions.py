@@ -32,6 +32,9 @@ class Permissions:
     TRANSACTION_UPDATE = "transaction.update"
     TRANSACTION_DELETE = "transaction.delete"
 
+    # Account
+    ACCOUNT_CLOSE = "account.close"
+
     #Permission
     PERMISSION_CREATE  = "role.create"
     PERMISSION_READ    = "role.read"

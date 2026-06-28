@@ -1,7 +1,7 @@
 import datetime
 import enum
 
-from sqlalchemy import Integer, Numeric, DateTime, ForeignKey, String, Enum, Index
+from sqlalchemy import Integer, Numeric, DateTime, ForeignKey, String, Enum, Index, Boolean
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from core.database import Base
@@ -13,15 +13,20 @@ class Account(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     balance: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    closed_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
+    closed_by: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
-    user = relationship("UserModel", backref="account")
+    user = relationship("UserModel", foreign_keys=[user_id], backref="account")
+    closer = relationship("UserModel", foreign_keys=[closed_by])
 
 
 class TransactionType(str, enum.Enum):
     deposit = "deposit"
     loan_disbursement = "loan_disbursement"
     installment_payment = "installment_payment"
+    account_close = "account_close"
 
 
 class TransactionDirection(str, enum.Enum):

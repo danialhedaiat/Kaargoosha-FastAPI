@@ -51,6 +51,8 @@ class AccountConsumer:
                 result = service.get_balance(data)
             elif method.routing_key == 'account.set_threshold':
                 result = service.set_threshold(data)
+            elif method.routing_key == 'account.close':
+                result = service.close(data)
 
             self.response(ch, method, properties, result)
 

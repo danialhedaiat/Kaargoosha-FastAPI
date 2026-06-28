@@ -89,6 +89,8 @@ class LoanService:
             account_service = AccountService(db=self.db)
             threshold = account_service.get_loan_threshold()
             account = self.db.query(Account).filter_by(user_id=user_id).first()
+            if account and not account.is_active:
+                return json.dumps({"error": "account is closed"})
             balance = int(account.balance) if account else 0
             if balance < threshold:
                 return json.dumps({

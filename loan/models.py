@@ -12,6 +12,7 @@ class LoanStatus(str, enum.Enum):
     pending = "pending"
     approved = "approved"
     rejected = "rejected"
+    paid = "paid"
 
 
 class Loan(Base):

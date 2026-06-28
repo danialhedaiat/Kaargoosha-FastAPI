@@ -60,6 +60,112 @@ class AccountService:
             return json.dumps({"error": "Account not found"})
         return AccountResponseSchema.model_validate(account).model_dump_json()
 
+    @permission(Permissions.ACCOUNT_CLOSE)
+    def close(self, data: dict):
+        """Admin-initiated account closure. Settles outstanding installment debt
+        from the wallet, pays out the remaining balance out-of-band (book entry
+        only), decreases the fund pool by the net payout, and soft-closes the
+        account. All movements happen atomically in one transaction."""
+        try:
+            user_id = data["user_id"]
+            admin_id = data["requested_by"]
+
+            account = self.db.query(Account).filter_by(user_id=user_id).first()
+            if not account:
+                return json.dumps({"error": "Account not found"})
+            if not account.is_active:
+                return json.dumps({"error": "Account is already closed"})
+
+            from loan.models import Loan, LoanStatus, Installment, InstallmentStatus, FundPool
+
+            # A pending loan request must be resolved before closing.
+            pending_loan = self.db.query(Loan).filter(
+                Loan.user_id == user_id,
+                Loan.status == LoanStatus.pending,
+            ).first()
+            if pending_loan:
+                return json.dumps({"error": "pending loan request must be resolved before closing"})
+
+            balance = int(account.balance)
+
+            unpaid = (
+                self.db.query(Installment)
+                .join(Loan, Installment.loan_id == Loan.id)
+                .filter(Loan.user_id == user_id, Installment.status == InstallmentStatus.pending)
+                .all()
+            )
+            debt = sum(i.amount for i in unpaid)
+
+            # Not enough in the wallet to cover the outstanding debt.
+            if debt > balance:
+                return json.dumps({"error": "must settle remaining debt before closing"})
+
+            fund_pool = self.db.query(FundPool).first()
+            if not fund_pool:
+                fund_pool = FundPool(balance=0)
+                self.db.add(fund_pool)
+                self.db.flush()
+
+            # Settle outstanding installments from the wallet (repayment in -> pool up).
+            for installment in unpaid:
+                installment.status = InstallmentStatus.paid
+                installment.paid_at = datetime.datetime.now()
+                self.db.add(Transaction(
+                    user_id=user_id,
+                    amount=installment.amount,
+                    direction=TransactionDirection.debit,
+                    type=TransactionType.installment_payment,
+                    reference_type="installment",
+                    reference_id=installment.id,
+                ))
+            fund_pool.balance = int(fund_pool.balance) + debt
+
+            # Any loan whose installments are now all paid is marked paid.
+            for loan_id in {i.loan_id for i in unpaid}:
+                remaining = self.db.query(Installment).filter(
+                    Installment.loan_id == loan_id,
+                    Installment.status == InstallmentStatus.pending,
+                ).count()
+                if remaining == 0:
+                    loan = self.db.query(Loan).filter_by(id=loan_id).first()
+                    if loan:
+                        loan.status = LoanStatus.paid
+
+            # Pay out the remainder out-of-band; fund pool must cover it.
+            remainder = balance - debt
+            if remainder > 0:
+                if int(fund_pool.balance) < remainder:
+                    self.db.rollback()
+                    return json.dumps({"error": "insufficient fund pool"})
+                fund_pool.balance = int(fund_pool.balance) - remainder
+                self.db.add(Transaction(
+                    user_id=user_id,
+                    amount=remainder,
+                    direction=TransactionDirection.debit,
+                    type=TransactionType.account_close,
+                    reference_type="account_close",
+                    reference_id=account.id,
+                ))
+
+            account.balance = 0
+            account.is_active = False
+            account.closed_at = datetime.datetime.now()
+            account.closed_by = admin_id
+
+            self.db.commit()
+            return json.dumps({
+                "user_id": user_id,
+                "is_active": account.is_active,
+                "settled_debt": debt,
+                "paid_out": remainder,
+            })
+
+        except Exception as e:
+            self.db.rollback()
+            logger.error(traceback.format_exc())
+            logger.error(e)
+            return json.dumps({"error": str(e)})
+
 
 class BankInfoService:
 
@@ -121,6 +227,10 @@ class ReceiptService:
             user_id = data["user_id"]
             receipt_type = data["type"]
             proof_type = data["proof_type"]
+
+            account = self.db.query(Account).filter_by(user_id=user_id).first()
+            if account and not account.is_active:
+                return json.dumps({"error": "account is closed"})
 
             if proof_type == "photo":
                 proof_bytes = data.get("proof_bytes")
