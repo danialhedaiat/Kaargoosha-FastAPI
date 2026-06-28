@@ -21,9 +21,9 @@ A FastAPI + SQLAlchemy backend service for family microfinance: user management,
 
 ### Financial Operations
 - **Account Management** — wallet balance, credit/debit operations
-- **Transactions** — unified ledger for deposits, loans, installments
-- **Deposits** — proof-based wallet charging with approval workflow
-- **Installments** — payment proof submission, tracking, collection
+- **Transactions** — immutable ledger for deposits, loans, installments
+- **Receipts** — unified proof-based request/slip for deposits and installment payments, with an admin approve/reject workflow
+- **Installments** — schedule generation, due-date tracking, collection on receipt approval
 
 ### Notifications
 - Admin notifications for pending loans, deposits, installments
@@ -114,9 +114,10 @@ Database (SQLite/PostgreSQL)
 
 ## Database Schema
 
-All 14 tables across the `user_management`, `account`, and `loan` domains, with
-their foreign-key relationships. `transactions` is the unified ledger that every
-credit/debit (deposit, loan disbursement, installment payment) writes to.
+All 13 tables across the `user_management`, `account`, and `loan` domains, with
+their foreign-key relationships. `transactions` is the immutable ledger that every
+credit/debit (deposit, loan disbursement, installment payment) is posted to on
+approval; `receipts` holds the mutable, proof-bearing requests that drive it.
 
 <p align="center">
   <img src="docs/diagrams/database_schema_diagram.png" alt="Database Schema" width="100%">
@@ -127,7 +128,8 @@ credit/debit (deposit, loan disbursement, installment payment) writes to.
 ## Service Interactions
 
 How the consumers route to services and how services collaborate (LoanService
-credits/debits via AccountService, DepositService notifies admins, etc.).
+credits/debits via AccountService, ReceiptService applies the money effect and
+posts the ledger Transaction on approval, etc.).
 
 <p align="center">
   <img src="docs/diagrams/service_interaction_diagram.png" alt="Service Interactions" width="100%">
@@ -137,22 +139,22 @@ credits/debits via AccountService, DepositService notifies admins, etc.).
 
 | Diagram | Description |
 | --- | --- |
-| [Database Schema](docs/diagrams/database_schema_diagram.svg) | ER diagram of all 14 tables and their relationships |
+| [Database Schema](docs/diagrams/database_schema_diagram.svg) | ER diagram of all 13 tables and their relationships |
 | [Service Interactions](docs/diagrams/service_interaction_diagram.svg) | Service layer collaboration and the RPC/permission patterns |
 
 ## Project Structure
 
 ```
 account/
-├── models.py       # Account, Transaction, Deposit, DepositRequest, AccountSetting
-├── service.py      # AccountService, BankInfoService, DepositService
-├── consumer.py     # account.*, bank_info.*, deposit.* routing
+├── models.py       # Account, Transaction, AccountSetting, Receipt
+├── service.py      # AccountService, BankInfoService, ReceiptService
+├── consumer.py     # account.*, bank_info.*, receipt.* routing
 └── schema.py       # Response schemas
 
 loan/
-├── models.py       # Loan, Installment, FundPool, InstallmentPaymentRequest
+├── models.py       # Loan, Installment, FundPool
 ├── service.py      # LoanService, InstallmentService, InstallmentPaymentService
-├── consumer.py     # loan.*, installment_payment.* routing
+├── consumer.py     # loan.*, installment_payment.get_pending routing
 └── schema.py
 
 user_management/
@@ -226,9 +228,33 @@ Bot sends request with callback queue:
 3. Bot receives response, matches `correlation_id`
 4. Bot async callback with response data
 
+### Receipts Model
+
+A **receipt** is the mutable request/slip a member submits with proof (photo or
+text) for an admin to review. It replaces the old per-type `deposit_requests` /
+`installment_payment_requests` tables with one table covering both:
+
+```python
+class ReceiptType(enum):
+    deposit = "deposit"
+    installment_payment = "installment_payment"
+
+class ReceiptStatus(enum):
+    pending = "pending"      # awaiting admin review
+    approved = "approved"    # money applied + ledger Transaction posted
+    rejected = "rejected"    # rejection_reason recorded
+```
+
+Photo proofs are stored as a file under `MEDIA_ROOT` (`proof_path`); text proofs
+are inline (`proof_text`). `ReceiptService` exposes `create` (member),
+`approve`/`reject` (`@permission(LOAN_APPROVE)`), and `list`/`get_proof`
+(`@permission(TRANSACTION_READ)`). `get_proof` returns the raw image bytes over
+RabbitMQ so the bot can re-send the actual photo to Bale.
+
 ### Transactions Model
 
-Unified financial ledger:
+Immutable financial ledger — rows are posted only when a receipt (or loan) is
+approved and are never mutated afterward:
 ```python
 class TransactionType(enum):
     deposit = "deposit"
@@ -239,13 +265,13 @@ class TransactionDirection(enum):
     credit = "credit"  # money in
     debit = "debit"    # money out
 
-# Every financial operation writes here
+# Posted on approval; deposits/installments reference the receipt they came from
 Transaction(
     user_id=123,
     amount=5000000,
     direction=TransactionDirection.credit,
-    type=TransactionType.loan_disbursement,
-    reference_type="loan",
+    type=TransactionType.deposit,
+    reference_type="receipt",
     reference_id=42
 )
 ```
@@ -255,28 +281,27 @@ Transaction(
 | Exchange | Type | Routing Keys | Producer | Consumer |
 | --- | --- | --- | --- | --- |
 | `user` | topic | `user.create`, `user.check_phone_number`, `user.get_user_by_username`, etc | Bot/User Service | User Consumer |
-| `loan` | topic | `loan.create`, `loan.approve`, `loan.reject`, `loan.get_loans` | Bot/Loan Service | Loan Consumer |
-| `account` | topic | `account.get_balance`, `account.set_threshold` | Account Service | Account Consumer |
-| `deposit` | topic | `deposit.create`, `deposit.approve`, `deposit.reject` | Bot/Deposit Service | Account Consumer |
-| `bank_info` | topic | `bank_info.get`, `bank_info.save` | Bot/Bank Service | Account Consumer |
-| `installment_payment` | topic | `installment_payment.get_pending`, `installment_payment.create`, `installment_payment.approve` | Bot/Installment Service | Loan Consumer |
-| `notify` | topic | `notify.loan_request`, `notify.loan_approved`, `notify.deposit_request`, etc | Services | Bot Consumer |
+| `loan` | topic | `loan.create`, `loan.approve`, `loan.reject`, `loan.get_client_history`, `loan.get_loans` | Bot | Loan Consumer |
+| `account` | topic | `account.get_balance`, `account.set_threshold` | Bot | Account Consumer |
+| `receipt` | topic | `receipt.create`, `receipt.approve`, `receipt.reject`, `receipt.list`, `receipt.get_proof` | Bot | Account Consumer (ReceiptService) |
+| `bank_info` | topic | `bank_info.get`, `bank_info.save` | Bot | Account Consumer |
+| `installment_payment` | topic | `installment_payment.get_pending` | Bot | Loan Consumer |
+| `notify` | topic | `notify.loan_request`, `notify.loan_approved`, `notify.loan_rejected` | Services | Bot Consumer |
 
 ## Database Models
 
 ### Core Models
 - **UserModel** — users table with names, phone, social media
 - **Account** — wallet balance per user
-- **Transaction** — unified financial ledger
+- **Transaction** — immutable financial ledger (posted on approval)
 - **FundPool** — shared pool balance for loans
 
 ### Loan Models
 - **Loan** — loan requests with status, amount, duration
-- **Installment** — monthly payments with due dates, paid_at
-- **InstallmentPaymentRequest** — proof submission & approval
+- **Installment** — monthly payments with due dates, status, paid_at
 
-### Deposit Models
-- **DepositRequest** — wallet charging with proof & approval
+### Receipts & Settings
+- **Receipt** — unified proof-based request/slip for deposits and installment payments; mutable (`pending` → `approved`/`rejected`). On approval the money effect is applied and an immutable `Transaction` is posted referencing it
 - **AccountSetting** — configurable loan balance threshold
 
 ### User Management
